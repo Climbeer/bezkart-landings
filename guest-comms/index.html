@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>БезКарт — Коммуникация С Гостями</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: "#eef1ff",
+                100: "#dfe4ff",
+                300: "#93a1ff",
+                400: "#6477ff",
+                500: "#4f63ff",
+                600: "#3f54f5",
+                700: "#2d2f85",
+                800: "#23245e"
+              }
+            },
+            boxShadow: {
+              soft: "0 18px 50px rgba(88,58,34,0.08)",
+              panel: "0 30px 80px rgba(88,58,34,0.12)"
+            }
+          }
+        }
+      };
+    </script>
+  </head>
+  <body class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(121,136,255,0.22),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(79,99,255,0.2),_transparent_30%),linear-gradient(180deg,_#171a46_0%,_#20245d_48%,_#191d4f_100%)] text-[#2f241d]">
+    <div class="absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.14),_transparent_40%),radial-gradient(circle_at_top_right,_rgba(121,136,255,0.18),_transparent_36%)]"></div>
+
+    <main class="px-4 py-8 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-6xl">
+        <header class="mb-8 flex items-center justify-between rounded-full border border-white/70 bg-white/75 px-4 py-3 shadow-soft backdrop-blur md:px-6">
+          <div class="flex items-center gap-3">
+            <div class="rounded-2xl bg-[#2d2f85] px-4 py-2.5 shadow-[0_14px_34px_rgba(45,47,133,0.18)]">
+              <p class="text-lg font-semibold tracking-[-0.04em] sm:text-xl">
+                <span class="text-brand-400">Без</span><span class="text-white">Карт</span>
+              </p>
+            </div>
+            <div class="hidden sm:block">
+              <p class="text-sm font-semibold tracking-[0.18em] text-white uppercase">БезКарт</p>
+              <p class="text-sm text-[#d6dafd]">Цифровая лояльность для coffee-to-go кофеен</p>
+            </div>
+          </div>
+          <a
+            href="https://t.me/BezKartDemoBot?start=119254835"
+            class="hidden rounded-full bg-brand-500 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-brand-600 md:inline-flex"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Посмотреть демо БезКарт
+          </a>
+        </header>
+
+        <section class="grid items-center gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:gap-12">
+          <div class="max-w-2xl">
+            <p class="mb-4 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-[#eef1ff] shadow-sm backdrop-blur">
+              Третья версия лендинга под коммуникацию с гостями
+            </p>
+            <h1 class="max-w-3xl text-4xl font-semibold leading-tight tracking-[-0.03em] text-white sm:text-5xl lg:text-6xl">
+              Здесь будет версия про возврат гостей через касания и коммуникации
+            </h1>
+            <p class="mt-5 max-w-2xl text-lg leading-8 text-[#e3e7ff] sm:text-xl">
+              Папка и маршрут уже готовы. Сюда мы положим третий лендинг, где главный акцент будет на сообщениях,
+              напоминаниях и регулярных касаниях с гостями через БезКарт.
+            </p>
+            <div class="mt-8 flex flex-col items-start gap-3">
+              <a
+                href="https://t.me/BezKartDemoBot?start=119254835"
+                class="inline-flex items-center justify-center rounded-full bg-brand-500 px-7 py-4 text-base font-semibold text-white shadow-[0_20px_50px_rgba(79,99,255,0.28)] transition hover:-translate-y-0.5 hover:bg-brand-600"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Посмотреть демо БезКарт
+              </a>
+              <p class="text-sm text-[#d6dafd]">Маршрут готов: /guest-comms</p>
+            </div>
+          </div>
+
+          <div class="rounded-[2rem] border border-white/75 bg-white/85 p-6 shadow-panel backdrop-blur">
+            <div class="rounded-[1.75rem] bg-[linear-gradient(180deg,_#2d2f85_0%,_#23245e_100%)] p-6 text-white">
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-[#dfe4ff]">Готово к наполнению</p>
+              <div class="mt-5 grid gap-3">
+                <div class="rounded-2xl bg-white/10 px-4 py-3">Папка создана</div>
+                <div class="rounded-2xl bg-white/10 px-4 py-3">URL будет жить на /guest-comms</div>
+                <div class="rounded-2xl bg-white/10 px-4 py-3">Стиль будет таким же, как у двух других версий</div>
+                <div class="rounded-2xl bg-white/10 px-4 py-3">Остаётся только вставить новый оффер и тексты</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>
