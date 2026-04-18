@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>БезКарт</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: "#eef1ff",
+                100: "#dfe4ff",
+                300: "#93a1ff",
+                400: "#6477ff",
+                500: "#4f63ff",
+                600: "#3f54f5",
+                700: "#2d2f85",
+                800: "#23245e"
+              }
+            },
+            boxShadow: {
+              panel: "0 30px 80px rgba(18,27,92,0.24)"
+            }
+          }
+        }
+      };
+    </script>
+  </head>
+  <body class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(121,136,255,0.22),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(79,99,255,0.2),_transparent_30%),linear-gradient(180deg,_#171a46_0%,_#20245d_48%,_#191d4f_100%)] text-white">
+    <div class="absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.14),_transparent_40%),radial-gradient(circle_at_top_right,_rgba(121,136,255,0.18),_transparent_36%)]"></div>
+
+    <main class="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+      <section class="w-full max-w-3xl rounded-[2rem] border border-white/15 bg-white/10 px-6 py-12 text-center shadow-panel backdrop-blur sm:px-10 sm:py-16">
+        <div class="mx-auto mb-6 inline-flex rounded-[1.5rem] bg-[#2d2f85] px-6 py-4 shadow-[0_18px_40px_rgba(18,27,92,0.25)]">
+          <p class="text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
+            <span class="text-brand-400">Без</span><span class="text-white">Карт</span>
+          </p>
+        </div>
+
+        <p class="mx-auto max-w-2xl text-lg leading-8 text-[#dfe4ff] sm:text-xl">
+          Цифровая лояльность в Telegram для coffee-to-go кофеен.
+        </p>
+
+        <div class="mt-8 flex flex-col items-center gap-3">
+          <a
+            href="https://t.me/BezKartDemoBot?start=119254835"
+            class="inline-flex items-center justify-center rounded-full bg-brand-500 px-7 py-4 text-base font-semibold text-white shadow-[0_20px_50px_rgba(79,99,255,0.28)] transition hover:-translate-y-0.5 hover:bg-brand-600"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Посмотреть демо БезКарт
+          </a>
+          <p class="text-sm text-[#cfd6ff]">Демо БезКарт в Telegram</p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
