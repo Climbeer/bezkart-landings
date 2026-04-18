@@ -77,11 +77,11 @@ const benefits = [
 const faqs = [
   {
     question: "Это сложно внедрить?",
-    answer: "Нет. Идея как раз в том, чтобы сохранить механику простой и понятной для маленькой кофейни.",
+    answer: "Нет. Идея как раз в том, чтобы сохранить механику простой и понятной для coffee-to-go формата.",
   },
   {
-    question: "Подходит ли это для маленькой точки?",
-    answer: "Да. Такой формат особенно удобен для coffee-to-go кофеен, где нет маркетолога и важна скорость на кассе.",
+    question: "Подходит ли это для одной или нескольких точек?",
+    answer: "Да. Такой формат подходит и для одной кофейни, и для сети из нескольких точек, особенно там, где важна скорость на кассе.",
   },
   {
     question: "Гостям нужно скачивать отдельное приложение?",
@@ -129,7 +129,7 @@ function TelegramLoyaltyLanding() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Посмотреть демо BezKart
+              Посмотреть демо БезКарт
             </a>
           </header>
 
@@ -153,9 +153,9 @@ function TelegramLoyaltyLanding() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Посмотреть демо BezKart
+                  Посмотреть демо БезКарт
                 </a>
-                <p className="text-sm text-[#d6dafd]">Демо BezKart в Telegram</p>
+                <p className="text-sm text-[#d6dafd]">Демо БезКарт в Telegram</p>
               </div>
             </div>
 
@@ -203,14 +203,14 @@ function TelegramLoyaltyLanding() {
                           BK
                         </div>
                         <div>
-                          <p className="text-sm text-[#dfe4ff]">Интерфейс BezKart в Telegram</p>
+                          <p className="text-sm text-[#dfe4ff]">Интерфейс БезКарт в Telegram</p>
                           <p className="font-semibold">Реальный экран бота вместо бумажной карты</p>
                         </div>
                       </div>
 
                       <div className="rounded-[1.75rem] bg-[linear-gradient(180deg,_#dfe4ff_0%,_#f4f6ff_100%)] p-3 shadow-[0_18px_45px_rgba(18,27,92,0.28)]">
                         <div className="mx-auto max-w-[15rem] overflow-hidden rounded-[1.9rem] border-4 border-[#131522] bg-[#131522] shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
-                          <img src={HERO_SCREEN} alt="Скрин BezKart бота для гостя" className="block h-auto w-full" />
+                          <img src={HERO_SCREEN} alt="Скрин бота БезКарт для гостя" className="block h-auto w-full" />
                         </div>
                       </div>
                       <div className="mt-4 grid gap-2 text-sm text-white/90">
@@ -284,17 +284,17 @@ function TelegramLoyaltyLanding() {
           <div className="mt-6 rounded-[1.75rem] border border-[#dfe4ff] bg-white/90 p-4 shadow-[0_18px_50px_rgba(88,58,34,0.08)] sm:p-5">
             <div className="grid items-center gap-5 md:grid-cols-[1.1fr_0.9fr]">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#2d2f85]">Как это выглядит в BezKart</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#2d2f85]">Как это выглядит в БезКарт</p>
                 <h3 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#2f241d]">
                   Не абстрактная схема, а живой экран бота для точки
                 </h3>
                 <p className="mt-3 text-base leading-7 text-[#5d4c3f]">
-                  Ниже реальный экран BezKart для бариста. Это тот же процесс лояльности, только уже без бумажных
+                  Ниже реальный экран БезКарт для бариста. Это тот же процесс лояльности, только уже без бумажных
                   карт, спорных штампов и слепого учета повторных гостей.
                 </p>
               </div>
               <div className="mx-auto w-full max-w-[15rem] rounded-[1.9rem] border-4 border-[#131522] bg-[#131522] p-1 shadow-[0_18px_40px_rgba(18,27,92,0.22)]">
-                <img src={FLOW_SCREEN} alt="Скрин BezKart бота для бариста" className="block h-auto w-full rounded-[1.45rem]" />
+                <img src={FLOW_SCREEN} alt="Скрин бота БезКарт для бариста" className="block h-auto w-full rounded-[1.45rem]" />
               </div>
             </div>
           </div>
@@ -395,7 +395,7 @@ function TelegramLoyaltyLanding() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Посмотреть демо BezKart
+                Посмотреть демо БезКарт
               </a>
             </div>
             <p className="mx-auto mt-5 max-w-2xl text-sm leading-6 text-[#f1dcca]">
