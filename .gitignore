@@ -1,0 +1,17 @@
+# Environment and secrets
+.env
+.env.*
+credentials.json
+token.json
+
+# Python/Node noise
+__pycache__/
+*.pyc
+node_modules/
+
+# Temporary/intermediate artifacts
+.tmp/*
+!.tmp/.gitkeep
+
+# Logs
+run_history/*.log

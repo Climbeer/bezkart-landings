@@ -1,0 +1,22 @@
+version: 1
+last_updated: 2026-04-01
+tools:
+  - name: preflight_check
+    path: execution/preflight_check.sh
+    purpose: Validate baseline project readiness before meaningful execution.
+    inputs:
+      - none
+    outputs:
+      - terminal status lines
+      - process exit code
+    side_effects:
+      - none
+    credentials_required: []
+    dry_run_support: not_required
+    reliability_notes: Simple filesystem checks only.
+    runtime_expectation: "< 1s"
+    cost_profile: free
+    limitations:
+      - Checks only baseline local structure.
+    example_usage:
+      - bash execution/preflight_check.sh
