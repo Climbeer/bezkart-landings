@@ -136,7 +136,7 @@ function TelegramLoyaltyLanding() {
           <div className="grid items-center gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:gap-12">
             <div className="max-w-2xl">
               <p className="mb-4 inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-[#eef1ff] shadow-sm backdrop-blur">
-                Для кофеен, где лояльность ещё живёт на бумаге
+                Для кофеен, которым нужен прямой канал связи с гостями
               </p>
               <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-[-0.03em] text-white sm:text-5xl lg:text-6xl">
                 Соберите базу гостей и начните напоминать о себе через БезКарт
@@ -170,7 +170,7 @@ function TelegramLoyaltyLanding() {
                     <div className="mt-4 rounded-[1.25rem] border border-dashed border-[#d8b9a0] bg-white p-4">
                       <div className="mb-3 flex items-center justify-between text-sm text-[#6d5b4f]">
                         <span>Потерянная коммуникация</span>
-                        <span>silent</span>
+                        <span>без связи</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         {Array.from({ length: 6 }).map((_, index) => (
@@ -200,7 +200,7 @@ function TelegramLoyaltyLanding() {
                     <div className="mt-3 rounded-[1.6rem] bg-[rgba(255,255,255,0.12)] p-4 text-white shadow-inner">
                       <div className="mb-4 flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#4f63ff] text-sm font-bold text-white">
-                          BK
+                          ТГ
                         </div>
                         <div>
                           <p className="text-sm text-[#dfe4ff]">Интерфейс БезКарт в Telegram</p>
@@ -382,11 +382,11 @@ function TelegramLoyaltyLanding() {
         <div className="mx-auto max-w-6xl">
           <div className="rounded-[2.25rem] bg-[linear-gradient(135deg,_#2d2f85_0%,_#20245d_45%,_#171a46_100%)] px-6 py-10 text-center text-[#fff7f0] shadow-[0_30px_90px_rgba(18,27,92,0.34)] sm:px-8 sm:py-12">
             <h2 className="mx-auto max-w-3xl text-3xl font-semibold tracking-[-0.03em] sm:text-4xl lg:text-5xl">
-              Пора заменить бумажные карты на БезКарт
+              Пора перестать делать акции в пустоту
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-[#f3e6db]">
-              Сохраните привычную механику для гостей, но переведите её в Telegram и начните нормально
-              управлять повторными визитами.
+              БезКарт даёт кофейне прямой канал связи с гостями через Telegram: акции, новинки и
+              поводы вернуться доходят до своей аудитории.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3">
               <a
