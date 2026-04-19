@@ -4,8 +4,8 @@ import { useState } from "react";
 
 const BRAND_NAME = "БезКарт";
 const REFERRAL_LINK = "https://t.me/BezKartDemoBot?start=119254835";
-const HERO_SCREEN = "/deliverables/assets/1.webp";
-const FLOW_SCREEN = "/deliverables/assets/2.png.webp";
+const HERO_SCREEN = "/assets/1.webp";
+const FLOW_SCREEN = "/assets/2.png.webp";
 
 const painPoints = [
   {
