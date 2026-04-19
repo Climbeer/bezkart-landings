@@ -34,7 +34,7 @@ const painPoints = [
   },
   {
     title: "Нельзя напомнить о себе в нужный момент",
-    text: "Когда гость выпал из привычки, кофейня не может мягко вернуть его вовремя через понятное и привычное касание.",
+    text: "Когда гость выпал из привычки, кофейня не может вовремя напомнить о себе и вернуть его через Telegram.",
     icon: (
       <svg viewBox="0 0 48 48" className="h-10 w-10" fill="none" aria-hidden="true">
         <circle cx="19" cy="20" r="8" className="fill-white/90 stroke-[#b99072]" strokeWidth="2" />
@@ -169,8 +169,8 @@ function TelegramLoyaltyLanding() {
                     <h2 className="mt-2 text-2xl font-semibold text-[#3a2a20]">Акции уходят в пустоту</h2>
                     <div className="mt-4 rounded-[1.25rem] border border-dashed border-[#d8b9a0] bg-white p-4">
                       <div className="mb-3 flex items-center justify-between text-sm text-[#6d5b4f]">
-                        <span>Потерянная коммуникация</span>
-                        <span>без связи</span>
+                        <span>Нет связи с гостями</span>
+                        <span>после покупки</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         {Array.from({ length: 6 }).map((_, index) => (
@@ -399,8 +399,8 @@ function TelegramLoyaltyLanding() {
               </a>
             </div>
             <p className="mx-auto mt-5 max-w-2xl text-sm leading-6 text-[#f1dcca]">
-              Если у вас coffee-to-go кофейня и вы устали от бумажных карт — переходите в Telegram-бот и посмотрите,
-              как это работает на практике.
+              Перейдите в Telegram-бот и посмотрите, как БезКарт помогает держать связь с гостями и возвращать их
+              через Telegram.
             </p>
           </div>
         </div>

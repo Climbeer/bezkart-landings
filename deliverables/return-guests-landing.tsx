@@ -57,10 +57,10 @@ const steps = [
   },
   {
     title: "Вы видите повторность и пропавших гостей",
-    text: "Становится понятно, кто ходит регулярно, а кто уже выпал и требует отдельного касания.",
+    text: "Становится понятно, кто ходит регулярно, а кто уже выпал и кому пора отдельно напомнить о себе.",
   },
   {
-    title: "Можно возвращать гостей через касания",
+    title: "Можно возвращать гостей через Telegram",
     text: "Лояльность начинает работать не только на бонусы, но и на возврат тех, кто перестал приходить.",
   },
 ];
@@ -169,8 +169,8 @@ function TelegramLoyaltyLanding() {
                     <h2 className="mt-2 text-2xl font-semibold text-[#3a2a20]">Гости пропадают незаметно</h2>
                     <div className="mt-4 rounded-[1.25rem] border border-dashed border-[#d8b9a0] bg-white p-4">
                       <div className="mb-3 flex items-center justify-between text-sm text-[#6d5b4f]">
-                        <span>Потерянные визиты</span>
-                        <span>не видно</span>
+                        <span>Пропавшие гости</span>
+                        <span>непонятно</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         {Array.from({ length: 6 }).map((_, index) => (
@@ -399,8 +399,7 @@ function TelegramLoyaltyLanding() {
               </a>
             </div>
             <p className="mx-auto mt-5 max-w-2xl text-sm leading-6 text-[#f1dcca]">
-              Если у вас coffee-to-go кофейня и вы устали от бумажных карт — переходите в Telegram-бот и посмотрите,
-              как это работает на практике.
+              Перейдите в Telegram-бот и посмотрите, как БезКарт помогает замечать и возвращать гостей.
             </p>
           </div>
         </div>

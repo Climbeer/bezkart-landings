@@ -170,7 +170,7 @@ function TelegramLoyaltyLanding() {
                     <div className="mt-4 rounded-[1.25rem] border border-dashed border-[#d8b9a0] bg-white p-4">
                       <div className="mb-3 flex items-center justify-between text-sm text-[#6d5b4f]">
                         <span>Каждый 6-й кофе</span>
-                        <span>stamp</span>
+                        <span>штампы</span>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         {Array.from({ length: 6 }).map((_, index) => (
@@ -200,7 +200,7 @@ function TelegramLoyaltyLanding() {
                     <div className="mt-3 rounded-[1.6rem] bg-[rgba(255,255,255,0.12)] p-4 text-white shadow-inner">
                       <div className="mb-4 flex items-center gap-3">
                         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#4f63ff] text-sm font-bold text-white">
-                          BK
+                          ТГ
                         </div>
                         <div>
                           <p className="text-sm text-[#dfe4ff]">Интерфейс БезКарт в Telegram</p>
