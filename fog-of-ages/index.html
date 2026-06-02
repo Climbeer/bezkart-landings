@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>2048: Fog of Ages v4.1</title>
+    <title>2048: Fog of Ages v4.2</title>
     <style>
       :root {
         color-scheme: dark;
@@ -1066,7 +1066,7 @@
       <header class="topbar">
         <div class="brand">
           <h1>2048: Fog of Ages</h1>
-          <p>Прототип · v4.1 public playtest</p>
+          <p>Прототип · v4.2 public playtest</p>
         </div>
         <section class="hud" aria-label="Статистика">
           <div class="stat">
@@ -1820,13 +1820,21 @@
       function isMagnetRangeCell(r, c) {
         if (!state.magnetizedBorderKey || !isOpen(r, c)) return false;
         const border = parseCellKey(state.magnetizedBorderKey);
-        const distance = Math.abs(r - border.r) + Math.abs(c - border.c);
-        if (distance < 1 || distance > MAGNETISM_RANGE) return false;
-        if (r !== border.r && c !== border.c) return false;
-        if (distance === 1) return true;
-        const midR = border.r + Math.sign(r - border.r);
-        const midC = border.c + Math.sign(c - border.c);
-        return isOpen(midR, midC);
+        return magnetRayDirections(border).some(({ dr, dc }) => {
+          for (let distance = 1; distance <= MAGNETISM_RANGE; distance += 1) {
+            const rayR = border.r + dr * distance;
+            const rayC = border.c + dc * distance;
+            if (!isInside(rayR, rayC) || !isOpen(rayR, rayC)) break;
+            if (rayR === r && rayC === c) return true;
+          }
+          return false;
+        });
+      }
+
+      function magnetRayDirections(border) {
+        return Object.values(DIRECTIONS).filter(({ dr, dc }) =>
+          isInside(border.r + dr, border.c + dc) && isOpen(border.r + dr, border.c + dc)
+        );
       }
 
       function findMagnetizedBorderMatch() {
@@ -1842,17 +1850,11 @@
         const occupied = tileAtMap();
         const matches = [];
 
-        Object.values(DIRECTIONS).forEach(({ dr, dc }) => {
+        magnetRayDirections(border).forEach(({ dr, dc }) => {
           for (let distance = 1; distance <= MAGNETISM_RANGE; distance += 1) {
             const r = border.r + dr * distance;
             const c = border.c + dc * distance;
-            if (!isInside(r, c) || !isOpen(r, c)) continue;
-
-            if (distance === 2) {
-              const midR = border.r + dr;
-              const midC = border.c + dc;
-              if (!isOpen(midR, midC) || occupied.has(cellKey(midR, midC))) continue;
-            }
+            if (!isInside(r, c) || !isOpen(r, c)) break;
 
             const tile = occupied.get(cellKey(r, c));
             if (tile && tile.value === requirement) {
