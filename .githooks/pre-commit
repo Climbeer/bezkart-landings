@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+if [[ ! -f "execution/publish_fog_of_ages.py" ]]; then
+  echo "[fog publish] missing execution/publish_fog_of_ages.py"
+  exit 1
+fi
+
+python3 execution/publish_fog_of_ages.py --execute
+git add fog-of-ages/index.html fog-of-ages/assets/world.png
+

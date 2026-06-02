@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+if [[ ! -f "execution/publish_fog_of_ages.py" ]]; then
+  echo "[fog publish] missing execution/publish_fog_of_ages.py"
+  exit 1
+fi
+
+python3 execution/publish_fog_of_ages.py --execute
+
+if ! git diff --quiet -- fog-of-ages/index.html fog-of-ages/assets/world.png; then
+  echo "[fog publish] public copy changed during pre-push."
+  echo "[fog publish] Commit fog-of-ages/ first, then push again."
+  exit 1
+fi
+
