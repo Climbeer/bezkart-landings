@@ -267,6 +267,41 @@
         animation: magnetTargetGlow 920ms ease-in-out infinite alternate;
       }
 
+      .cell.magnetized {
+        border-color: rgba(121, 232, 255, 0.8);
+        box-shadow:
+          inset 0 0 0 2px rgba(121, 232, 255, 0.42),
+          0 0 22px rgba(121, 232, 255, 0.36),
+          0 0 34px rgba(255, 225, 141, 0.18);
+        animation: magnetizedBorderPulse 1400ms ease-in-out infinite alternate;
+      }
+
+      .cell.magnetized::after {
+        content: "";
+        position: absolute;
+        inset: 7%;
+        border-radius: 8px;
+        border: 1px solid rgba(121, 232, 255, 0.42);
+        background:
+          radial-gradient(circle, rgba(121, 232, 255, 0.18), transparent 58%),
+          linear-gradient(90deg, transparent, rgba(255, 236, 170, 0.18), transparent);
+        opacity: 0.72;
+        pointer-events: none;
+        animation: magnetizedRing 1800ms ease-in-out infinite;
+      }
+
+      .cell.magnetized .requirement {
+        z-index: 2;
+        border-color: rgba(194, 246, 255, 0.82);
+        box-shadow: 0 0 14px rgba(121, 232, 255, 0.34);
+      }
+
+      .cell.magnet-range {
+        box-shadow:
+          inset 0 0 0 1px rgba(121, 232, 255, 0.16),
+          inset 0 0 18px rgba(121, 232, 255, 0.1);
+      }
+
       .requirement {
         position: relative;
         z-index: 1;
@@ -329,6 +364,11 @@
       .tile.is-magnetized {
         z-index: 6;
         animation: magnetTileGlow 540ms ease-in-out both;
+      }
+
+      .tile.is-earthquake {
+        z-index: 5;
+        animation: quakeTile 780ms cubic-bezier(0.2, 0.78, 0.22, 1) both;
       }
 
       .reveal-flash {
@@ -411,6 +451,10 @@
 
       .board.is-shaking {
         animation: boardShake 430ms ease both;
+      }
+
+      .board.is-quaking {
+        animation: earthquakeShake 760ms cubic-bezier(0.22, 0.82, 0.24, 1) both;
       }
 
       .board.victory-reveal {
@@ -522,14 +566,22 @@
       }
 
       .help-button.is-available {
-        animation: helpPulse 1200ms ease-in-out infinite alternate;
+        animation: helpPulse 850ms ease-in-out infinite alternate;
       }
 
       .side-panel.help-ready {
         box-shadow:
           0 28px 90px rgba(0, 0, 0, 0.34),
-          0 0 0 1px rgba(255, 229, 148, 0.24),
-          0 0 30px rgba(255, 209, 104, 0.16);
+          0 0 0 1px rgba(255, 229, 148, 0.36),
+          0 0 38px rgba(255, 209, 104, 0.24);
+        animation: helpPanelReady 1350ms ease-in-out infinite alternate;
+      }
+
+      .side-panel.help-ready .status {
+        border-color: rgba(255, 225, 141, 0.48);
+        background:
+          radial-gradient(circle at 18% 0%, rgba(255, 230, 153, 0.16), transparent 50%),
+          rgba(255, 255, 255, 0.08);
       }
 
       .blessing-panel {
@@ -743,6 +795,30 @@
         }
       }
 
+      @keyframes magnetizedBorderPulse {
+        from {
+          filter: brightness(1);
+        }
+        to {
+          filter: brightness(1.14);
+        }
+      }
+
+      @keyframes magnetizedRing {
+        0% {
+          opacity: 0.34;
+          transform: scale(0.96);
+        }
+        52% {
+          opacity: 0.82;
+          transform: scale(1.02);
+        }
+        100% {
+          opacity: 0.42;
+          transform: scale(1.08);
+        }
+      }
+
       @keyframes magnetTileGlow {
         0% {
           filter: brightness(1);
@@ -776,14 +852,26 @@
 
       @keyframes helpPulse {
         from {
-          box-shadow: 0 0 0 rgba(255, 225, 141, 0);
+          box-shadow:
+            0 0 0 rgba(255, 225, 141, 0),
+            0 0 0 rgba(255, 225, 141, 0);
           filter: brightness(1);
         }
         to {
           box-shadow:
-            0 0 0 2px rgba(255, 225, 141, 0.32),
-            0 0 24px rgba(255, 204, 91, 0.42);
-          filter: brightness(1.12);
+            0 0 0 3px rgba(255, 225, 141, 0.46),
+            0 0 32px rgba(255, 204, 91, 0.58),
+            inset 0 0 22px rgba(255, 241, 186, 0.18);
+          filter: brightness(1.22);
+        }
+      }
+
+      @keyframes helpPanelReady {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(-1px);
         }
       }
 
@@ -845,6 +933,45 @@
         }
         72% {
           transform: translateX(2px);
+        }
+      }
+
+      @keyframes earthquakeShake {
+        8% {
+          transform: translate(-7px, 3px) rotate(-0.4deg);
+        }
+        18% {
+          transform: translate(6px, -4px) rotate(0.35deg);
+        }
+        32% {
+          transform: translate(-5px, -2px) rotate(-0.25deg);
+        }
+        48% {
+          transform: translate(4px, 3px) rotate(0.2deg);
+        }
+        66% {
+          transform: translate(-3px, 1px);
+        }
+        84% {
+          transform: translate(2px, -1px);
+        }
+      }
+
+      @keyframes quakeTile {
+        0%,
+        100% {
+          filter: brightness(1);
+        }
+        18% {
+          filter: brightness(1.35);
+          scale: 1.08;
+        }
+        38% {
+          scale: 0.94;
+        }
+        64% {
+          filter: brightness(1.16);
+          scale: 1.04;
         }
       }
 
@@ -1035,7 +1162,8 @@
       const HELP_THRESHOLD = 50;
       const HELP_ANIMATION_MS = 1700;
       const MAGNETISM_RANGE = 2;
-      const MAGNETISM_SELECTION_MODE = "magnetTargetSelection";
+      const MAGNETISM_SELECTION_MODE = "magnetPlacementMode";
+      const VICTORY_BUTTON_DELAY_MS = 3200;
       const DEBUG_MODE = false;
       const CURRENT_ERA_KEY = "stone_age";
 
@@ -1104,7 +1232,7 @@
           type: "magnetism",
           name: "Магнетизм",
           icon: "М",
-          hint: "Открывает границу плиткой поблизости"
+          hint: "Намагничивает border-клетку"
         },
         {
           type: "swap",
@@ -1152,6 +1280,8 @@
         pendingSwapTileId: null,
         magnetizingTileId: null,
         magnetismTargetKey: null,
+        magnetizedBorderKey: null,
+        earthquakeTileIds: new Set(),
         victoryRevealing: false,
         muted: false,
         locked: false,
@@ -1297,11 +1427,13 @@
         state.pendingSwapTileId = null;
         state.magnetizingTileId = null;
         state.magnetismTargetKey = null;
+        state.magnetizedBorderKey = null;
+        state.earthquakeTileIds = new Set();
         state.victoryRevealing = false;
         state.complete = false;
         state.gameOver = false;
         state.locked = false;
-        elements.board.classList.remove("victory-reveal", "is-shaking");
+        elements.board.classList.remove("victory-reveal", "is-shaking", "is-quaking");
         elements.worldEventLayer.replaceChildren();
         resetOpenCells();
         const first = spawnRandomTile();
@@ -1492,6 +1624,14 @@
 
         window.setTimeout(() => {
           const completedNow = state.openCells.size === WORLD_SIZE * WORLD_SIZE;
+          if (state.magnetizedBorderKey && revealedKeys.has(state.magnetizedBorderKey)) {
+            state.magnetizedBorderKey = null;
+          }
+
+          if (!completedNow && !revealedKeys.size && triggerMagnetismIfReady()) {
+            return;
+          }
+
           if (!completedNow) {
             const spawned = spawnRandomTile(revealedKeys);
             state.lastSpawnedIds = new Set(spawned ? [spawned] : []);
@@ -1515,7 +1655,7 @@
 
           if (state.gameOver) {
             setStatus("Ходов нет");
-            showOverlay("Ходов нет", "Мир ещё скрыт за туманом.");
+            showOverlay("Ходов нет", "Эта эпоха остаётся нераскрытой.");
             playBlocked();
           }
         }, revealedKeys.size ? 260 : 150);
@@ -1529,7 +1669,12 @@
         }
 
         state.movesWithoutExpansion += 1;
-        if (!state.helpAvailable && !state.activeBlessing && state.movesWithoutExpansion >= HELP_THRESHOLD) {
+        if (
+          !state.helpAvailable &&
+          !state.activeBlessing &&
+          !state.magnetizedBorderKey &&
+          state.movesWithoutExpansion >= HELP_THRESHOLD
+        ) {
           state.helpAvailable = true;
           return true;
         }
@@ -1548,6 +1693,7 @@
         state.victoryRevealing = true;
         state.blessingMode = null;
         state.pendingSwapTileId = null;
+        state.magnetizedBorderKey = null;
         setStatus(currentEra.completionTitle);
         elements.board.classList.add("victory-reveal");
         render();
@@ -1556,9 +1702,10 @@
         window.setTimeout(() => {
           showOverlay(currentEra.completionTitle, currentEra.completionText, {
             buttonText: currentEra.completionButtonText,
-            delayButton: true
+            delayButton: true,
+            buttonDelay: VICTORY_BUTTON_DELAY_MS
           });
-        }, 1200);
+        }, 1500);
       }
 
       function hasLegalMove() {
@@ -1611,8 +1758,8 @@
 
       function targetHintForBlessing(type) {
         return {
-          magnetism: "Выбери border-клетку",
-          magnetTargetSelection: "Выбери border-клетку",
+          magnetism: "Выбери border-клетку для магнита",
+          magnetPlacementMode: "Выбери border-клетку для магнита",
           swap: state.pendingSwapTileId ? "Выбери соседнюю плитку" : "Выбери первую плитку",
           burn: "Выбери обычную плитку",
           earthquake: "Готово",
@@ -1631,7 +1778,7 @@
         const tile = tileAtPosition(r, c);
 
         if (isMagnetismSelectionMode()) {
-          return Boolean(findMagnetismTileForBorder(r, c));
+          return isBorder(r, c);
         }
 
         if (state.blessingMode === "burn") {
@@ -1652,37 +1799,69 @@
         return false;
       }
 
-      function findMagnetismTileForBorder(r, c) {
-        if (!isBorder(r, c)) return null;
-        const requirement = requirementAt(r, c);
-        return state.tiles
-          .map((tile) => ({
-            tile,
-            distance: Math.abs(tile.r - r) + Math.abs(tile.c - c)
-          }))
-          .filter(
-            ({ tile, distance }) =>
-              isOpen(tile.r, tile.c) &&
-              distance >= 1 &&
-              distance <= MAGNETISM_RANGE &&
-              tile.value === requirement
-          )
-          .sort((a, b) => a.distance - b.distance || a.tile.value - b.tile.value)[0] || null;
-      }
-
-      function magnetismTargets() {
+      function borderCells() {
         const targets = [];
         for (let r = 0; r < WORLD_SIZE; r += 1) {
           for (let c = 0; c < WORLD_SIZE; c += 1) {
-            const match = findMagnetismTileForBorder(r, c);
-            if (match) targets.push({ r, c, match });
+            if (isBorder(r, c)) targets.push({ r, c });
           }
         }
         return targets;
       }
 
+      function magnetismTargets() {
+        return borderCells();
+      }
+
       function isMagnetismSelectionMode() {
         return state.blessingMode === MAGNETISM_SELECTION_MODE;
+      }
+
+      function isMagnetRangeCell(r, c) {
+        if (!state.magnetizedBorderKey || !isOpen(r, c)) return false;
+        const border = parseCellKey(state.magnetizedBorderKey);
+        const distance = Math.abs(r - border.r) + Math.abs(c - border.c);
+        if (distance < 1 || distance > MAGNETISM_RANGE) return false;
+        if (r !== border.r && c !== border.c) return false;
+        if (distance === 1) return true;
+        const midR = border.r + Math.sign(r - border.r);
+        const midC = border.c + Math.sign(c - border.c);
+        return isOpen(midR, midC);
+      }
+
+      function findMagnetizedBorderMatch() {
+        if (!state.magnetizedBorderKey) return null;
+        const border = parseCellKey(state.magnetizedBorderKey);
+        if (!isBorder(border.r, border.c)) {
+          console.log("Magnetism: failed - border no longer available");
+          state.magnetizedBorderKey = null;
+          return null;
+        }
+
+        const requirement = requirementAt(border.r, border.c);
+        const occupied = tileAtMap();
+        const matches = [];
+
+        Object.values(DIRECTIONS).forEach(({ dr, dc }) => {
+          for (let distance = 1; distance <= MAGNETISM_RANGE; distance += 1) {
+            const r = border.r + dr * distance;
+            const c = border.c + dc * distance;
+            if (!isInside(r, c) || !isOpen(r, c)) continue;
+
+            if (distance === 2) {
+              const midR = border.r + dr;
+              const midC = border.c + dc;
+              if (!isOpen(midR, midC) || occupied.has(cellKey(midR, midC))) continue;
+            }
+
+            const tile = occupied.get(cellKey(r, c));
+            if (tile && tile.value === requirement) {
+              matches.push({ tile, border, distance });
+            }
+          }
+        });
+
+        return matches.sort((a, b) => a.distance - b.distance || a.tile.id - b.tile.id)[0] || null;
       }
 
       function hasTargetForBlessing(type) {
@@ -1696,14 +1875,20 @@
             state.tiles.some((other) => tile.id !== other.id && isAdjacentCell(tile, other))
           );
         }
-        if (type === "magnetism") {
-          return magnetismTargets().length > 0;
-        }
+        if (type === "magnetism") return !state.magnetizedBorderKey && magnetismTargets().length > 0;
         return false;
       }
 
       function requestHelp() {
-        if (state.locked || !state.helpAvailable || state.helpAnimating || state.activeBlessing || state.complete || state.gameOver) return;
+        if (
+          state.locked ||
+          !state.helpAvailable ||
+          state.helpAnimating ||
+          state.activeBlessing ||
+          state.magnetizedBorderKey ||
+          state.complete ||
+          state.gameOver
+        ) return;
         state.helpAnimating = true;
         state.helpAvailable = false;
         state.locked = true;
@@ -1787,11 +1972,13 @@
         state.pendingSwapTileId = null;
         state.magnetizingTileId = null;
         state.magnetismTargetKey = null;
+        state.magnetizedBorderKey = null;
+        state.earthquakeTileIds = new Set();
         state.victoryRevealing = false;
         state.complete = false;
         state.gameOver = false;
         state.locked = false;
-        elements.board.classList.remove("victory-reveal", "is-shaking");
+        elements.board.classList.remove("victory-reveal", "is-shaking", "is-quaking");
         elements.worldEventLayer.replaceChildren();
         hideOverlay();
         setStatus("Debug setup: 3 хода до помощи");
@@ -1807,6 +1994,7 @@
         state.activeBlessing = null;
         state.blessingMode = null;
         state.pendingSwapTileId = null;
+        state.magnetizedBorderKey = null;
         state.locked = false;
         setStatus("Духи готовы ответить");
         render();
@@ -1819,6 +2007,7 @@
         state.activeBlessing = { ...blessing };
         state.blessingMode = null;
         state.pendingSwapTileId = null;
+        state.magnetizedBorderKey = type === "magnetism" ? null : state.magnetizedBorderKey;
         state.helpAvailable = false;
         state.helpAnimating = false;
         state.locked = false;
@@ -1835,6 +2024,13 @@
         if (type === "magnetism") {
           const targets = magnetismTargets();
           console.log(`Magnetism: valid targets found: ${targets.length}`);
+          if (state.magnetizedBorderKey) {
+            console.log("Magnetism: failed - border already magnetized");
+            setStatus("Магнит уже ждёт");
+            render();
+            return;
+          }
+
           if (!targets.length) {
             console.log("Magnetism: failed - no valid targets");
             setStatus("Некуда применить магнетизм");
@@ -1904,6 +2100,7 @@
         state.pendingSwapTileId = null;
         state.magnetizingTileId = null;
         state.magnetismTargetKey = null;
+        if (options.clearMagnetism) state.magnetizedBorderKey = null;
         state.lastMergedIds = new Set();
         state.blockedKeys = new Set();
         state.lastRevealedKeys = new Set(options.revealedKey ? [options.revealedKey] : []);
@@ -1924,38 +2121,62 @@
 
         if (!hasLegalMove()) {
           state.gameOver = true;
-          showOverlay("Ходов нет", "Мир ещё скрыт за туманом.");
+          showOverlay("Ходов нет", "Эта эпоха остаётся нераскрытой.");
         }
       }
 
       function applyMagnetismBlessing(r, c) {
         console.log("Magnetism: border clicked");
-        const match = findMagnetismTileForBorder(r, c);
-        if (!match) {
+        if (!isBorder(r, c)) {
           console.log("Magnetism: failed - invalid border target");
           return;
         }
 
-        const openedKey = cellKey(r, c);
+        state.magnetizedBorderKey = cellKey(r, c);
+        state.activeBlessing = null;
+        state.blessingMode = null;
+        state.pendingSwapTileId = null;
+        setStatus("Граница намагничена");
+        console.log("Magnetism: armed");
+        playMerge(requirementAt(r, c));
+        render();
+        window.setTimeout(() => {
+          triggerMagnetismIfReady();
+        }, 180);
+      }
+
+      function triggerMagnetismIfReady() {
+        if (!state.magnetizedBorderKey || state.complete || state.gameOver) return false;
+        const match = findMagnetizedBorderMatch();
+        if (!match) return false;
+
+        resolveMagnetism(match);
+        return true;
+      }
+
+      function resolveMagnetism(match) {
+        const openedKey = cellKey(match.border.r, match.border.c);
         state.locked = true;
         state.magnetismTargetKey = openedKey;
         state.magnetizingTileId = match.tile.id;
-        setStatus("Магнетизм тянет плитку");
+        setStatus("Магнит зовёт плитку");
         playExpand();
         render();
-        drawMagnetismPulse(match.tile, { r, c });
+        drawMagnetismPulse(match.tile, match.border);
 
         window.setTimeout(() => {
           state.tiles = state.tiles.filter((tile) => tile.id !== match.tile.id);
           state.openCells.add(openedKey);
+          state.magnetizedBorderKey = null;
           state.magnetismTargetKey = null;
           state.magnetizingTileId = null;
           console.log("Magnetism: resolved");
           finishBlessing("Магнетизм открыл путь", {
             openedTerritory: true,
-            revealedKey: openedKey
+            revealedKey: openedKey,
+            clearMagnetism: true
           });
-        }, 620);
+        }, 680);
       }
 
       function drawMagnetismPulse(tile, target) {
@@ -2066,7 +2287,7 @@
       }
 
       function applyEarthquakeBlessing() {
-        const selected = shuffled(state.tiles).slice(0, Math.min(4, state.tiles.length));
+        const selected = shuffled(state.tiles).slice(0, Math.min(6, state.tiles.length));
         if (selected.length < 2) {
           setStatus("Земля пока молчит");
           render();
@@ -2079,8 +2300,15 @@
           tile.r = nextPosition.r;
           tile.c = nextPosition.c;
         });
+        state.earthquakeTileIds = new Set(selected.map((tile) => tile.id));
+        elements.board.classList.add("is-quaking");
         playExpand();
-        finishBlessing("Земля сдвинулась");
+        finishBlessing("Мир сдвинулся");
+        window.setTimeout(() => {
+          state.earthquakeTileIds = new Set();
+          elements.board.classList.remove("is-quaking");
+          render();
+        }, 820);
       }
 
       function render() {
@@ -2110,6 +2338,8 @@
             if (state.blockedKeys.has(key)) cell.classList.add("blocked");
             if (isCellTargetable(r, c)) cell.classList.add("targetable");
             if (isSelectedSwapCell(r, c)) cell.classList.add("selected");
+            if (state.magnetizedBorderKey === key) cell.classList.add("magnetized");
+            if (isMagnetRangeCell(r, c)) cell.classList.add("magnet-range");
             if (state.magnetismTargetKey === key) cell.classList.add("magnet-target");
             if (open) {
               cell.style.backgroundImage = `url("${WORLD_IMAGE}")`;
@@ -2151,7 +2381,8 @@
             String(tile.value).length >= 4 ? "compact" : "",
             state.lastSpawnedIds.has(tile.id) ? "is-new" : "",
             state.lastMergedIds.has(tile.id) ? "is-merged" : "",
-            state.magnetizingTileId === tile.id ? "is-magnetized" : ""
+            state.magnetizingTileId === tile.id ? "is-magnetized" : "",
+            state.earthquakeTileIds.has(tile.id) ? "is-earthquake" : ""
           ]
             .filter(Boolean)
             .join(" ");
@@ -2221,10 +2452,16 @@
             !state.helpAvailable ||
             state.helpAnimating ||
             Boolean(state.activeBlessing) ||
+            Boolean(state.magnetizedBorderKey) ||
             state.complete ||
             state.gameOver
         );
-        const helpVisible = state.helpAvailable && !state.activeBlessing && !state.complete && !state.gameOver;
+        const helpVisible =
+          state.helpAvailable &&
+          !state.activeBlessing &&
+          !state.magnetizedBorderKey &&
+          !state.complete &&
+          !state.gameOver;
         elements.helpButton.classList.toggle("is-available", helpVisible);
         elements.sidePanel.classList.toggle("help-ready", helpVisible);
         elements.board.classList.toggle("victory-reveal", state.victoryRevealing);
@@ -2278,7 +2515,7 @@
           window.setTimeout(() => {
             elements.overlayButton.classList.remove("is-delayed");
             elements.overlayButton.classList.add("is-ready");
-          }, 1400);
+          }, options.buttonDelay || 1400);
         }
       }
 
@@ -2429,6 +2666,7 @@
           debugMode: DEBUG_MODE,
           startBoardSize: normalizedStartBoardSize(),
           magnetismTargets: magnetismTargets().length,
+          magnetizedBorderKey: state.magnetizedBorderKey,
           mode: OPEN_MODE,
           revealed: state.openCells.size,
           tiles: state.tiles.map((tile) => ({ ...tile }))
