@@ -1101,7 +1101,7 @@
           </div>
 
           <div class="controls">
-            <div class="segmented" aria-label="Режим открытия">
+            <div class="segmented hidden" aria-label="Режим открытия">
               <button id="strictMode" class="btn active" type="button">Strict</button>
               <button id="sacrificeMode" class="btn" type="button">Sacrifice</button>
             </div>
@@ -1152,7 +1152,7 @@
 
     <script>
       const WORLD_SIZE = 8;
-      const START_BOARD_SIZE = 3;
+      const START_BOARD_SIZE = 4;
       let OPEN_MODE = "strict";
       const OPEN_MULTIPLE_PER_MOVE = true;
       const STORAGE_KEY = "fog-of-ages-best";
@@ -1164,7 +1164,7 @@
       const MAGNETISM_RANGE = 2;
       const MAGNETISM_SELECTION_MODE = "magnetPlacementMode";
       const VICTORY_BUTTON_DELAY_MS = 3200;
-      const DEBUG_MODE = false;
+      const DEBUG_MODE = true;
       const CURRENT_ERA_KEY = "stone_age";
 
       const ERA_CONFIGS = {
