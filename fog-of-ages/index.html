@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>2048: Fog of Ages v4.2</title>
+    <title>2048: Fog of Ages v4.3</title>
     <style>
       :root {
         color-scheme: dark;
@@ -1066,7 +1066,7 @@
       <header class="topbar">
         <div class="brand">
           <h1>2048: Fog of Ages</h1>
-          <p>Прототип · v4.2 public playtest</p>
+          <p>Прототип · v4.3 public playtest</p>
         </div>
         <section class="hud" aria-label="Статистика">
           <div class="stat">
@@ -1196,6 +1196,17 @@
         up: { dr: -1, dc: 0 },
         down: { dr: 1, dc: 0 }
       };
+
+      const MAGNET_DIRECTIONS = [
+        { dr: 0, dc: -1 },
+        { dr: 0, dc: 1 },
+        { dr: -1, dc: 0 },
+        { dr: 1, dc: 0 },
+        { dr: -1, dc: -1 },
+        { dr: -1, dc: 1 },
+        { dr: 1, dc: -1 },
+        { dr: 1, dc: 1 }
+      ];
 
       const KEY_TO_DIRECTION = {
         ArrowLeft: "left",
@@ -1832,7 +1843,7 @@
       }
 
       function magnetRayDirections(border) {
-        return Object.values(DIRECTIONS).filter(({ dr, dc }) =>
+        return MAGNET_DIRECTIONS.filter(({ dr, dc }) =>
           isInside(border.r + dr, border.c + dc) && isOpen(border.r + dr, border.c + dc)
         );
       }
