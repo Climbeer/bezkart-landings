@@ -1,0 +1,2441 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>2048: Fog of Ages v4</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #111512;
+        --ink: #f7f1dc;
+        --muted: #bac5ad;
+        --panel: rgba(26, 32, 25, 0.82);
+        --panel-strong: rgba(18, 23, 19, 0.94);
+        --line: rgba(255, 255, 255, 0.12);
+        --cell-gap: clamp(3px, 0.72vw, 7px);
+        --board-pad: clamp(7px, 1vw, 12px);
+        --size: 8;
+        --gap-count: 7;
+        --tile-size: 64px;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+        margin: 0;
+      }
+
+      body {
+        overflow-x: hidden;
+        background:
+          linear-gradient(135deg, rgba(37, 72, 54, 0.42), transparent 30%),
+          linear-gradient(315deg, rgba(126, 91, 38, 0.38), transparent 28%),
+          radial-gradient(circle at 50% 20%, rgba(238, 183, 89, 0.16), transparent 28%),
+          var(--bg);
+        color: var(--ink);
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .shell {
+        min-height: 100dvh;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: clamp(14px, 2vw, 22px);
+        padding: clamp(12px, 2vw, 24px);
+      }
+
+      .topbar {
+        width: min(1180px, 100%);
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 14px;
+        align-items: center;
+      }
+
+      .brand {
+        min-width: 0;
+      }
+
+      .brand p {
+        margin: 0;
+        color: var(--muted);
+        font-size: clamp(0.78rem, 1.4vw, 0.95rem);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 4vw, 3.6rem);
+        line-height: 0.95;
+        letter-spacing: 0;
+      }
+
+      .hud {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(82px, 1fr));
+        gap: 8px;
+      }
+
+      .stat {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        padding: 9px 11px;
+        text-align: right;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+      }
+
+      .stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+      }
+
+      .stat strong {
+        display: block;
+        margin-top: 2px;
+        font-size: clamp(1.05rem, 2vw, 1.45rem);
+      }
+
+      .stage {
+        width: min(1180px, 100%);
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: minmax(300px, 1fr) minmax(226px, 310px);
+        gap: clamp(12px, 2vw, 20px);
+        align-items: start;
+      }
+
+      .board-frame,
+      .side-panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.34);
+        backdrop-filter: blur(18px);
+      }
+
+      .board-frame {
+        position: relative;
+        min-width: 0;
+        padding: var(--board-pad);
+      }
+
+      .board {
+        position: relative;
+        width: min(78dvh, 100%);
+        max-width: 760px;
+        margin: 0 auto;
+        aspect-ratio: 1;
+        overflow: hidden;
+        border-radius: 8px;
+        touch-action: none;
+        background:
+          linear-gradient(rgba(15, 21, 19, 0.5), rgba(15, 21, 19, 0.42)),
+          url("assets/world.png") center / cover;
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+          inset 0 0 70px rgba(6, 11, 10, 0.82);
+      }
+
+      .board::before {
+        content: "";
+        position: absolute;
+        inset: -12%;
+        pointer-events: none;
+        background:
+          radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.16), transparent 14%),
+          radial-gradient(circle at 82% 80%, rgba(255, 255, 255, 0.12), transparent 17%),
+          linear-gradient(110deg, transparent, rgba(230, 242, 225, 0.08), transparent);
+        mix-blend-mode: screen;
+        opacity: 0.52;
+        animation: mistDrift 9s ease-in-out infinite alternate;
+      }
+
+      .cell-layer,
+      .tile-layer,
+      .effect-layer,
+      .world-event-layer {
+        position: absolute;
+        inset: var(--board-pad);
+      }
+
+      .cell-layer {
+        display: grid;
+        grid-template-columns: repeat(var(--size), minmax(0, 1fr));
+        grid-template-rows: repeat(var(--size), minmax(0, 1fr));
+        gap: var(--cell-gap);
+      }
+
+      .tile-layer,
+      .effect-layer,
+      .world-event-layer {
+        pointer-events: none;
+      }
+
+      .world-event-layer {
+        z-index: 5;
+      }
+
+      .cell {
+        position: relative;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        min-width: 0;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .cell.open {
+        background-color: rgba(226, 202, 139, 0.22);
+        background-repeat: no-repeat;
+        box-shadow: inset 0 0 22px rgba(255, 241, 186, 0.13);
+      }
+
+      .cell.open::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0)),
+          radial-gradient(circle at 50% 100%, rgba(24, 21, 12, 0.2), transparent 70%);
+      }
+
+      .cell.border {
+        border-color: rgba(238, 220, 159, 0.33);
+        background:
+          radial-gradient(circle at 50% 42%, rgba(255, 245, 192, 0.18), transparent 36%),
+          linear-gradient(145deg, rgba(68, 81, 67, 0.78), rgba(30, 39, 37, 0.92));
+      }
+
+      .cell.border::before,
+      .cell.fog::before {
+        content: "";
+        position: absolute;
+        inset: -25%;
+        background:
+          radial-gradient(circle at 20% 30%, rgba(226, 236, 215, 0.16), transparent 24%),
+          radial-gradient(circle at 74% 70%, rgba(226, 236, 215, 0.12), transparent 24%),
+          linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+        opacity: 0.75;
+        animation: fogPulse 4.8s ease-in-out infinite alternate;
+      }
+
+      .cell.fog {
+        border-color: rgba(255, 255, 255, 0.07);
+        background:
+          linear-gradient(145deg, rgba(12, 16, 17, 0.96), rgba(31, 40, 39, 0.92)),
+          radial-gradient(circle at center, rgba(255, 255, 255, 0.06), transparent 62%);
+      }
+
+      .cell.revealed {
+        animation: cellReveal 460ms ease both;
+      }
+
+      .cell.blocked {
+        animation: blocked 220ms ease both;
+      }
+
+      .cell.targetable {
+        border-color: rgba(255, 232, 146, 0.86);
+        box-shadow:
+          inset 0 0 0 2px rgba(255, 232, 146, 0.58),
+          0 0 18px rgba(255, 204, 91, 0.28);
+        cursor: pointer;
+      }
+
+      .cell.selected {
+        border-color: rgba(146, 232, 255, 0.9);
+        box-shadow:
+          inset 0 0 0 2px rgba(146, 232, 255, 0.68),
+          0 0 20px rgba(88, 196, 224, 0.35);
+      }
+
+      .cell.magnet-target {
+        animation: magnetTargetGlow 920ms ease-in-out infinite alternate;
+      }
+
+      .requirement {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        place-items: center;
+        width: min(82%, 54px);
+        aspect-ratio: 1;
+        border-radius: 50%;
+        border: 1px solid rgba(253, 232, 164, 0.52);
+        background: rgba(20, 25, 23, 0.56);
+        color: #ffe4a5;
+        font-weight: 900;
+        font-size: clamp(0.72rem, 2.2vw, 1.18rem);
+        text-shadow: 0 1px 8px rgba(0, 0, 0, 0.72);
+      }
+
+      .tile,
+      .reveal-flash {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: var(--tile-size);
+        height: var(--tile-size);
+      }
+
+      .tile {
+        z-index: 3;
+        display: grid;
+        place-items: center;
+        border-radius: 6px;
+        background: var(--tile-bg);
+        color: var(--tile-ink);
+        font-weight: 950;
+        font-size: var(--tile-font, 1.6rem);
+        line-height: 1;
+        letter-spacing: 0;
+        box-shadow:
+          0 10px 20px rgba(0, 0, 0, 0.26),
+          inset 0 1px 0 rgba(255, 255, 255, 0.38),
+          inset 0 -10px 18px rgba(0, 0, 0, 0.08);
+        transition:
+          transform 145ms cubic-bezier(0.2, 0.82, 0.23, 1),
+          background 120ms ease,
+          color 120ms ease;
+        will-change: transform;
+      }
+
+      .tile.compact {
+        font-size: var(--tile-font, 1.25rem);
+      }
+
+      .tile.is-new {
+        animation: tileIn 190ms ease-out both;
+      }
+
+      .tile.is-merged {
+        animation: tilePop 220ms ease-out both;
+      }
+
+      .tile.is-magnetized {
+        z-index: 6;
+        animation: magnetTileGlow 540ms ease-in-out both;
+      }
+
+      .reveal-flash {
+        z-index: 2;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 239, 177, 0.78);
+        background:
+          radial-gradient(circle, rgba(255, 248, 193, 0.8), rgba(255, 208, 99, 0.22) 42%, transparent 68%);
+        animation: revealFlash 680ms ease-out both;
+      }
+
+      .magnet-line {
+        position: absolute;
+        z-index: 4;
+        left: 0;
+        top: 0;
+        height: 3px;
+        border-radius: 999px;
+        transform-origin: 0 50%;
+        background: linear-gradient(90deg, rgba(117, 229, 255, 0), rgba(117, 229, 255, 0.92), rgba(255, 242, 161, 0));
+        box-shadow: 0 0 18px rgba(117, 229, 255, 0.68);
+        animation: magnetLinePulse 620ms ease-out both;
+      }
+
+      .shaman-event {
+        position: absolute;
+        left: 9%;
+        top: 69%;
+        width: clamp(30px, 7vw, 58px);
+        height: clamp(46px, 10vw, 84px);
+        transform-origin: 50% 100%;
+        animation: shamanRise 1500ms ease both;
+      }
+
+      .shaman-body {
+        position: absolute;
+        left: 28%;
+        bottom: 0;
+        width: 44%;
+        height: 58%;
+        border-radius: 999px 999px 8px 8px;
+        background: linear-gradient(180deg, #f2d08e, #9f623f);
+        box-shadow: inset 0 6px 0 rgba(255, 255, 255, 0.18);
+      }
+
+      .shaman-body::before {
+        content: "";
+        position: absolute;
+        left: 14%;
+        top: -28%;
+        width: 72%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: #d9b06c;
+        box-shadow: 0 -7px 0 #3f2c21;
+      }
+
+      .shaman-staff {
+        position: absolute;
+        right: 8%;
+        bottom: 8%;
+        width: 4px;
+        height: 88%;
+        border-radius: 999px;
+        background: #e9d59b;
+        transform-origin: bottom;
+        animation: staffRaise 1500ms ease both;
+      }
+
+      .spirit-flash {
+        position: absolute;
+        inset: 0;
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 18% 70%, rgba(255, 249, 185, 0.72), transparent 24%),
+          linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, 0.68) 48%, transparent 54%);
+        mix-blend-mode: screen;
+        animation: spiritFlash 1500ms ease both;
+      }
+
+      .board.is-shaking {
+        animation: boardShake 430ms ease both;
+      }
+
+      .board.victory-reveal {
+        background: url("assets/world.png") center / cover;
+      }
+
+      .board.victory-reveal .cell-layer,
+      .board.victory-reveal .tile-layer {
+        opacity: 0;
+        transition: opacity 900ms ease;
+      }
+
+      .board.victory-reveal::before {
+        opacity: 0;
+        transition: opacity 900ms ease;
+      }
+
+      .side-panel {
+        display: grid;
+        gap: 12px;
+        padding: 12px;
+      }
+
+      .status {
+        min-height: 58px;
+        display: grid;
+        align-content: center;
+        gap: 2px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.06);
+        padding: 12px;
+      }
+
+      .status span {
+        color: var(--muted);
+        font-size: 0.76rem;
+        text-transform: uppercase;
+      }
+
+      .status strong {
+        font-size: 1.02rem;
+      }
+
+      .controls {
+        display: grid;
+        gap: 8px;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .segmented {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        padding: 4px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(5, 8, 7, 0.28);
+      }
+
+      .btn {
+        min-height: 42px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--ink);
+        cursor: pointer;
+        transition:
+          transform 130ms ease,
+          background 130ms ease,
+          border-color 130ms ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.13);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+        transform: none;
+      }
+
+      .btn.active {
+        border-color: rgba(255, 225, 141, 0.72);
+        background: linear-gradient(180deg, rgba(222, 161, 66, 0.92), rgba(151, 99, 44, 0.94));
+        color: #fff7d4;
+      }
+
+      .primary {
+        min-height: 48px;
+        border-color: rgba(174, 219, 181, 0.36);
+        background: linear-gradient(180deg, rgba(73, 133, 91, 0.95), rgba(34, 83, 65, 0.96));
+      }
+
+      .help-button {
+        border-color: rgba(246, 216, 137, 0.44);
+        background:
+          radial-gradient(circle at 50% 0%, rgba(255, 239, 172, 0.18), transparent 52%),
+          linear-gradient(180deg, rgba(142, 101, 52, 0.96), rgba(88, 72, 55, 0.96));
+      }
+
+      .help-button.is-available {
+        animation: helpPulse 1200ms ease-in-out infinite alternate;
+      }
+
+      .side-panel.help-ready {
+        box-shadow:
+          0 28px 90px rgba(0, 0, 0, 0.34),
+          0 0 0 1px rgba(255, 229, 148, 0.24),
+          0 0 30px rgba(255, 209, 104, 0.16);
+      }
+
+      .blessing-panel {
+        display: grid;
+        gap: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 232, 146, 0.22);
+        background:
+          radial-gradient(circle at 10% 0%, rgba(255, 227, 139, 0.12), transparent 46%),
+          rgba(0, 0, 0, 0.18);
+        padding: 10px;
+      }
+
+      .blessing-head {
+        display: grid;
+        grid-template-columns: 42px 1fr;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .blessing-icon {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 235, 166, 0.48);
+        background: linear-gradient(180deg, rgba(230, 181, 87, 0.92), rgba(104, 78, 55, 0.96));
+        color: #fff6d2;
+        font-weight: 950;
+      }
+
+      .blessing-name {
+        margin: 0;
+        font-weight: 850;
+      }
+
+      .blessing-hint {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .blessing-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .btn.secondary {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .debug-panel {
+        display: grid;
+        gap: 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(118, 196, 255, 0.28);
+        background: rgba(7, 16, 20, 0.62);
+        padding: 10px;
+      }
+
+      .debug-panel p {
+        margin: 0;
+        color: #b9ddff;
+        font-size: 0.76rem;
+        text-transform: uppercase;
+      }
+
+      .debug-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .debug-panel .btn {
+        min-height: 34px;
+        padding: 6px;
+        font-size: 0.78rem;
+      }
+
+      .mini-map {
+        display: grid;
+        grid-template-columns: repeat(var(--size), minmax(0, 1fr));
+        gap: 3px;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.18);
+      }
+
+      .mini-cell {
+        aspect-ratio: 1;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .mini-cell.open {
+        background: #9ec27c;
+      }
+
+      .mini-cell.border {
+        background: #d7a555;
+      }
+
+      .overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: none;
+        place-items: center;
+        padding: 20px;
+        background: rgba(7, 10, 9, 0.62);
+        backdrop-filter: blur(10px);
+      }
+
+      .overlay.show {
+        display: grid;
+      }
+
+      .dialog {
+        width: min(390px, 100%);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        background: var(--panel-strong);
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+      }
+
+      .dialog h2 {
+        margin: 0;
+        font-size: 1.7rem;
+        letter-spacing: 0;
+      }
+
+      .dialog p {
+        margin: 10px 0 18px;
+        color: var(--muted);
+      }
+
+      .dialog .btn.is-delayed {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .dialog .btn.is-ready {
+        opacity: 1;
+        pointer-events: auto;
+        transition: opacity 360ms ease;
+      }
+
+      @keyframes mistDrift {
+        from {
+          transform: translate3d(-1%, -1%, 0) scale(1.02);
+        }
+        to {
+          transform: translate3d(1.4%, 1%, 0) scale(1.04);
+        }
+      }
+
+      @keyframes fogPulse {
+        from {
+          transform: translateX(-5%);
+          opacity: 0.5;
+        }
+        to {
+          transform: translateX(5%);
+          opacity: 0.9;
+        }
+      }
+
+      @keyframes tileIn {
+        from {
+          opacity: 0;
+          scale: 0.54;
+        }
+      }
+
+      @keyframes tilePop {
+        45% {
+          scale: 1.12;
+          filter: brightness(1.16);
+        }
+      }
+
+      @keyframes revealFlash {
+        0% {
+          opacity: 0;
+          scale: 0.62;
+        }
+        38% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          scale: 1.4;
+        }
+      }
+
+      @keyframes magnetTargetGlow {
+        from {
+          box-shadow:
+            inset 0 0 0 2px rgba(255, 232, 146, 0.58),
+            0 0 12px rgba(117, 229, 255, 0.25);
+        }
+        to {
+          box-shadow:
+            inset 0 0 0 2px rgba(117, 229, 255, 0.78),
+            0 0 26px rgba(117, 229, 255, 0.55);
+        }
+      }
+
+      @keyframes magnetTileGlow {
+        0% {
+          filter: brightness(1);
+        }
+        52% {
+          filter: brightness(1.38);
+          scale: 1.08;
+          box-shadow:
+            0 0 22px rgba(117, 229, 255, 0.68),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+        100% {
+          opacity: 0.25;
+          scale: 0.82;
+        }
+      }
+
+      @keyframes magnetLinePulse {
+        0% {
+          opacity: 0;
+          scale: 0.2 1;
+        }
+        35% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          scale: 1 1;
+        }
+      }
+
+      @keyframes helpPulse {
+        from {
+          box-shadow: 0 0 0 rgba(255, 225, 141, 0);
+          filter: brightness(1);
+        }
+        to {
+          box-shadow:
+            0 0 0 2px rgba(255, 225, 141, 0.32),
+            0 0 24px rgba(255, 204, 91, 0.42);
+          filter: brightness(1.12);
+        }
+      }
+
+      @keyframes shamanRise {
+        0% {
+          opacity: 0;
+          translate: 0 20px;
+          scale: 0.82;
+        }
+        24% {
+          opacity: 1;
+          translate: 0 0;
+          scale: 1;
+        }
+        68% {
+          translate: 0 -4px;
+        }
+        100% {
+          opacity: 0;
+          translate: 0 -6px;
+        }
+      }
+
+      @keyframes staffRaise {
+        0%,
+        28% {
+          rotate: -18deg;
+        }
+        64% {
+          rotate: 12deg;
+        }
+        100% {
+          rotate: 0deg;
+        }
+      }
+
+      @keyframes spiritFlash {
+        0%,
+        44% {
+          opacity: 0;
+        }
+        52% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+
+      @keyframes boardShake {
+        18% {
+          transform: translateX(-3px);
+        }
+        36% {
+          transform: translateX(3px);
+        }
+        54% {
+          transform: translateX(-2px);
+        }
+        72% {
+          transform: translateX(2px);
+        }
+      }
+
+      @keyframes cellReveal {
+        from {
+          filter: brightness(1.6) saturate(1.3);
+          transform: scale(0.96);
+        }
+      }
+
+      @keyframes blocked {
+        25% {
+          transform: translateX(-3px);
+        }
+        50% {
+          transform: translateX(3px);
+        }
+        75% {
+          transform: translateX(-2px);
+        }
+      }
+
+      @media (max-width: 860px) {
+        .shell {
+          padding: 10px;
+        }
+
+        .topbar {
+          grid-template-columns: 1fr;
+        }
+
+        .hud {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        .stat {
+          text-align: left;
+        }
+
+        .stage {
+          grid-template-columns: 1fr;
+        }
+
+        .board {
+          width: min(96vw, 70dvh);
+        }
+
+        .side-panel {
+          grid-template-columns: 1fr 1fr;
+          align-items: stretch;
+        }
+
+        .mini-map {
+          display: none;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .hud {
+          gap: 6px;
+        }
+
+        .stat {
+          padding: 8px;
+        }
+
+        .side-panel {
+          grid-template-columns: 1fr;
+        }
+
+        .board {
+          width: 100%;
+        }
+
+        .tile {
+          font-size: var(--tile-font, 1.1rem);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 1ms !important;
+          transition-duration: 1ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <h1>2048: Fog of Ages</h1>
+          <p>Прототип · v4 public playtest</p>
+        </div>
+        <section class="hud" aria-label="Статистика">
+          <div class="stat">
+            <span>Счёт</span>
+            <strong id="score">0</strong>
+          </div>
+          <div class="stat">
+            <span>Лучший</span>
+            <strong id="best">0</strong>
+          </div>
+          <div class="stat">
+            <span>Открыто</span>
+            <strong id="revealed">25%</strong>
+          </div>
+        </section>
+      </header>
+
+      <section class="stage">
+        <section class="board-frame" aria-label="Игровое поле">
+          <div id="board" class="board">
+            <div id="cellLayer" class="cell-layer"></div>
+            <div id="effectLayer" class="effect-layer"></div>
+            <div id="worldEventLayer" class="world-event-layer"></div>
+            <div id="tileLayer" class="tile-layer"></div>
+          </div>
+        </section>
+
+        <aside id="sidePanel" class="side-panel">
+          <div class="status">
+            <span>Состояние</span>
+            <strong id="statusText">Эпоха просыпается</strong>
+          </div>
+
+          <div class="controls">
+            <div class="segmented" aria-label="Режим открытия">
+              <button id="strictMode" class="btn active" type="button">Strict</button>
+              <button id="sacrificeMode" class="btn" type="button">Sacrifice</button>
+            </div>
+            <button id="soundButton" class="btn" type="button">Звук включён</button>
+            <button id="helpButton" class="btn help-button hidden" type="button">Воззвать к духам</button>
+            <button id="newGameButton" class="btn primary" type="button">Новая игра</button>
+          </div>
+
+          <div id="blessingPanel" class="blessing-panel hidden">
+            <div class="blessing-head">
+              <div id="blessingIcon" class="blessing-icon">М</div>
+              <div>
+                <p id="blessingName" class="blessing-name">Магнетизм</p>
+                <p id="blessingHint" class="blessing-hint">Готово</p>
+              </div>
+            </div>
+            <div class="blessing-actions">
+              <button id="useBlessingButton" class="btn" type="button">Использовать</button>
+              <button id="cancelBlessingButton" class="btn secondary" type="button">Отмена</button>
+            </div>
+          </div>
+
+          <div id="debugPanel" class="debug-panel hidden">
+            <p>Debug mode</p>
+            <button id="debugBlessingTestButton" class="btn" type="button">Debug: Blessing Test</button>
+            <button id="debugForceHelpButton" class="btn" type="button">Debug: Force Help</button>
+            <div class="debug-grid">
+              <button data-debug-blessing="magnetism" class="btn" type="button">Grant Magnetism</button>
+              <button data-debug-blessing="swap" class="btn" type="button">Grant Swap</button>
+              <button data-debug-blessing="burn" class="btn" type="button">Grant Burn</button>
+              <button data-debug-blessing="earthquake" class="btn" type="button">Grant Earthquake</button>
+              <button data-debug-blessing="split" class="btn" type="button">Grant Split</button>
+            </div>
+          </div>
+
+          <div id="miniMap" class="mini-map" aria-hidden="true"></div>
+        </aside>
+      </section>
+    </main>
+
+    <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
+      <div class="dialog">
+        <h2 id="overlayTitle">Эпоха раскрыта</h2>
+        <p id="overlayText">Туман отступил полностью.</p>
+        <button id="overlayButton" class="btn primary" type="button">Новая игра</button>
+      </div>
+    </div>
+
+    <script>
+      const WORLD_SIZE = 8;
+      const START_BOARD_SIZE = 3;
+      let OPEN_MODE = "strict";
+      const OPEN_MULTIPLE_PER_MOVE = true;
+      const STORAGE_KEY = "fog-of-ages-best";
+      const WORLD_IMAGE = "assets/world.png";
+      const SPAWN_CHANCE_2 = 0.90;
+      const SPAWN_CHANCE_4 = 0.10;
+      const HELP_THRESHOLD = 50;
+      const HELP_ANIMATION_MS = 1700;
+      const MAGNETISM_RANGE = 2;
+      const MAGNETISM_SELECTION_MODE = "magnetTargetSelection";
+      const DEBUG_MODE = false;
+      const CURRENT_ERA_KEY = "stone_age";
+
+      const ERA_CONFIGS = {
+        stone_age: {
+          helpActionText: "Воззвать к духам",
+          completionTitle: "Эпоха раскрыта",
+          completionText: "Туман отступил. В этом мире ещё есть, на что посмотреть…",
+          completionButtonText: "Продолжить путь",
+          secrets: []
+        }
+      };
+
+      const currentEra = ERA_CONFIGS[CURRENT_ERA_KEY];
+
+      const REQUIREMENTS = [
+        [64, 64, 32, 64, 128, 64, 64, 128],
+        [64, 32, 8, 16, 32, 16, 32, 64],
+        [32, 8, 0, 0, 0, 0, 16, 32],
+        [64, 16, 0, 0, 0, 0, 32, 64],
+        [128, 32, 0, 0, 0, 0, 64, 128],
+        [64, 16, 0, 0, 0, 0, 32, 64],
+        [64, 32, 16, 32, 64, 32, 64, 128],
+        [128, 64, 32, 64, 128, 64, 128, 256]
+      ];
+
+      const DIRECTIONS = {
+        left: { dr: 0, dc: -1 },
+        right: { dr: 0, dc: 1 },
+        up: { dr: -1, dc: 0 },
+        down: { dr: 1, dc: 0 }
+      };
+
+      const KEY_TO_DIRECTION = {
+        ArrowLeft: "left",
+        ArrowRight: "right",
+        ArrowUp: "up",
+        ArrowDown: "down",
+        a: "left",
+        d: "right",
+        w: "up",
+        s: "down",
+        A: "left",
+        D: "right",
+        W: "up",
+        S: "down"
+      };
+
+      const tilePalette = [
+        { limit: 2, bg: "#f2e7c9", ink: "#394034" },
+        { limit: 4, bg: "#edd6a7", ink: "#394034" },
+        { limit: 8, bg: "#e6ad55", ink: "#fff6da" },
+        { limit: 16, bg: "#c87445", ink: "#fff6da" },
+        { limit: 32, bg: "#b65345", ink: "#fff6da" },
+        { limit: 64, bg: "#8c4a4d", ink: "#fff6da" },
+        { limit: 128, bg: "#4f927a", ink: "#f7ffe6" },
+        { limit: 256, bg: "#317d8e", ink: "#f3fffb" },
+        { limit: 512, bg: "#44669b", ink: "#f8fbff" },
+        { limit: 1024, bg: "#785a9f", ink: "#fff8ff" },
+        { limit: 2048, bg: "#c3993c", ink: "#fff8db" },
+        { limit: Infinity, bg: "#1d2425", ink: "#ffe29a" }
+      ];
+
+      const BLESSINGS = [
+        {
+          type: "magnetism",
+          name: "Магнетизм",
+          icon: "М",
+          hint: "Открывает границу плиткой поблизости"
+        },
+        {
+          type: "swap",
+          name: "Обмен",
+          icon: "О",
+          hint: "Меняет две соседние плитки"
+        },
+        {
+          type: "burn",
+          name: "Очищение",
+          icon: "Ч",
+          hint: "Убирает одну обычную плитку"
+        },
+        {
+          type: "earthquake",
+          name: "Землетрясение",
+          icon: "З",
+          hint: "Слегка переставляет плитки"
+        },
+        {
+          type: "split",
+          name: "Раскол",
+          icon: "Р",
+          hint: "Делит плитку на две меньшие"
+        }
+      ];
+
+      const state = {
+        score: 0,
+        best: Number(localStorage.getItem(STORAGE_KEY) || 0),
+        moves: 0,
+        nextTileId: 1,
+        openCells: new Set(),
+        tiles: [],
+        lastSpawnedIds: new Set(),
+        lastMergedIds: new Set(),
+        lastRevealedKeys: new Set(),
+        blockedKeys: new Set(),
+        boardMetrics: { cell: 64, gap: 6 },
+        movesWithoutExpansion: 0,
+        helpAvailable: false,
+        helpAnimating: false,
+        activeBlessing: null,
+        blessingMode: null,
+        pendingSwapTileId: null,
+        magnetizingTileId: null,
+        magnetismTargetKey: null,
+        victoryRevealing: false,
+        muted: false,
+        locked: false,
+        complete: false,
+        gameOver: false
+      };
+
+      const elements = {
+        board: document.getElementById("board"),
+        cellLayer: document.getElementById("cellLayer"),
+        tileLayer: document.getElementById("tileLayer"),
+        effectLayer: document.getElementById("effectLayer"),
+        worldEventLayer: document.getElementById("worldEventLayer"),
+        miniMap: document.getElementById("miniMap"),
+        score: document.getElementById("score"),
+        best: document.getElementById("best"),
+        revealed: document.getElementById("revealed"),
+        sidePanel: document.getElementById("sidePanel"),
+        statusText: document.getElementById("statusText"),
+        strictMode: document.getElementById("strictMode"),
+        sacrificeMode: document.getElementById("sacrificeMode"),
+        soundButton: document.getElementById("soundButton"),
+        helpButton: document.getElementById("helpButton"),
+        blessingPanel: document.getElementById("blessingPanel"),
+        blessingIcon: document.getElementById("blessingIcon"),
+        blessingName: document.getElementById("blessingName"),
+        blessingHint: document.getElementById("blessingHint"),
+        useBlessingButton: document.getElementById("useBlessingButton"),
+        cancelBlessingButton: document.getElementById("cancelBlessingButton"),
+        debugPanel: document.getElementById("debugPanel"),
+        debugBlessingTestButton: document.getElementById("debugBlessingTestButton"),
+        debugForceHelpButton: document.getElementById("debugForceHelpButton"),
+        newGameButton: document.getElementById("newGameButton"),
+        overlay: document.getElementById("overlay"),
+        overlayTitle: document.getElementById("overlayTitle"),
+        overlayText: document.getElementById("overlayText"),
+        overlayButton: document.getElementById("overlayButton")
+      };
+
+      let audioContext = null;
+      let pointerStart = null;
+
+      function cellKey(r, c) {
+        return `${r}:${c}`;
+      }
+
+      function parseCellKey(key) {
+        const [r, c] = key.split(":").map(Number);
+        return { r, c };
+      }
+
+      function isInside(r, c) {
+        return r >= 0 && r < WORLD_SIZE && c >= 0 && c < WORLD_SIZE;
+      }
+
+      function isOpen(r, c) {
+        return state.openCells.has(cellKey(r, c));
+      }
+
+      function isBorder(r, c) {
+        if (!isInside(r, c) || isOpen(r, c)) return false;
+        return Object.values(DIRECTIONS).some(({ dr, dc }) => isOpen(r + dr, c + dc));
+      }
+
+      function canOpen(tileValue, requirement) {
+        if (OPEN_MODE === "sacrifice") return tileValue >= requirement;
+        return tileValue === requirement;
+      }
+
+      function requirementAt(r, c) {
+        const requirement = REQUIREMENTS[r][c];
+        return requirement > 0 ? requirement : fallbackRequirementAt(r, c);
+      }
+
+      function fallbackRequirementAt(r, c) {
+        const center = (WORLD_SIZE - 1) / 2;
+        const distance = Math.abs(r - center) + Math.abs(c - center);
+        if (distance <= 1.5) return 8;
+        if (distance <= 2.5) return 16;
+        if (distance <= 3.5) return 32;
+        return 64;
+      }
+
+      function terrainPosition(r, c) {
+        const x = c === 0 ? 0 : (c / (WORLD_SIZE - 1)) * 100;
+        const y = r === 0 ? 0 : (r / (WORLD_SIZE - 1)) * 100;
+        return `${x}% ${y}%`;
+      }
+
+      function tileAtMap() {
+        const map = new Map();
+        state.tiles.forEach((tile) => map.set(cellKey(tile.r, tile.c), tile));
+        return map;
+      }
+
+      function openPositions() {
+        const positions = [];
+        state.openCells.forEach((key) => positions.push(parseCellKey(key)));
+        return positions;
+      }
+
+      function emptyOpenPositions() {
+        const occupied = tileAtMap();
+        return openPositions().filter((pos) => !occupied.has(cellKey(pos.r, pos.c)));
+      }
+
+      function normalizedStartBoardSize() {
+        return START_BOARD_SIZE === 3 ? 3 : 4;
+      }
+
+      function startBoardBounds() {
+        const size = normalizedStartBoardSize();
+        const min = Math.floor((WORLD_SIZE - size) / 2);
+        return {
+          min,
+          max: min + size - 1
+        };
+      }
+
+      function resetOpenCells() {
+        const bounds = startBoardBounds();
+        state.openCells.clear();
+        for (let r = bounds.min; r <= bounds.max; r += 1) {
+          for (let c = bounds.min; c <= bounds.max; c += 1) {
+            state.openCells.add(cellKey(r, c));
+          }
+        }
+      }
+
+      function startGame() {
+        state.score = 0;
+        state.moves = 0;
+        state.nextTileId = 1;
+        state.tiles = [];
+        state.lastMergedIds = new Set();
+        state.lastRevealedKeys = new Set();
+        state.blockedKeys = new Set();
+        state.movesWithoutExpansion = 0;
+        state.helpAvailable = false;
+        state.helpAnimating = false;
+        state.activeBlessing = null;
+        state.blessingMode = null;
+        state.pendingSwapTileId = null;
+        state.magnetizingTileId = null;
+        state.magnetismTargetKey = null;
+        state.victoryRevealing = false;
+        state.complete = false;
+        state.gameOver = false;
+        state.locked = false;
+        elements.board.classList.remove("victory-reveal", "is-shaking");
+        elements.worldEventLayer.replaceChildren();
+        resetOpenCells();
+        const first = spawnRandomTile();
+        const second = spawnRandomTile();
+        state.lastSpawnedIds = new Set([first, second].filter(Boolean));
+        hideOverlay();
+        setStatus("Эпоха просыпается");
+        render();
+      }
+
+      function spawnRandomTile(excludedKeys = new Set()) {
+        const empty = emptyOpenPositions();
+        if (!empty.length) return null;
+        const safeEmpty = empty.filter((pos) => !excludedKeys.has(cellKey(pos.r, pos.c)));
+        const spawnPool = safeEmpty.length ? safeEmpty : empty;
+        const pos = spawnPool[Math.floor(Math.random() * spawnPool.length)];
+        const tile = {
+          id: state.nextTileId,
+          value: spawnTileValue(),
+          r: pos.r,
+          c: pos.c
+        };
+        state.nextTileId += 1;
+        state.tiles.push(tile);
+        return tile.id;
+      }
+
+      function spawnTileValue() {
+        const totalChance = SPAWN_CHANCE_2 + SPAWN_CHANCE_4;
+        const roll = Math.random() * totalChance;
+        return roll < SPAWN_CHANCE_2 ? 2 : 4;
+      }
+
+      function getLineSegments(directionName) {
+        const segments = [];
+        const flush = (segment) => {
+          if (segment.length) {
+            segments.push(directionName === "right" || directionName === "down" ? [...segment].reverse() : [...segment]);
+          }
+        };
+
+        if (directionName === "left" || directionName === "right") {
+          for (let r = 0; r < WORLD_SIZE; r += 1) {
+            let segment = [];
+            for (let c = 0; c < WORLD_SIZE; c += 1) {
+              if (isOpen(r, c)) {
+                segment.push({ r, c });
+              } else {
+                flush(segment);
+                segment = [];
+              }
+            }
+            flush(segment);
+          }
+        } else {
+          for (let c = 0; c < WORLD_SIZE; c += 1) {
+            let segment = [];
+            for (let r = 0; r < WORLD_SIZE; r += 1) {
+              if (isOpen(r, c)) {
+                segment.push({ r, c });
+              } else {
+                flush(segment);
+                segment = [];
+              }
+            }
+            flush(segment);
+          }
+        }
+
+        return segments;
+      }
+
+      function move(directionName) {
+        if (state.locked || state.blessingMode || state.complete || state.gameOver) return;
+        const direction = DIRECTIONS[directionName];
+        const removedIds = new Set();
+        const mergedIds = new Set();
+        const revealedKeys = new Set();
+        const blockedKeys = new Set();
+        let moved = false;
+        let gained = 0;
+
+        const occupied = tileAtMap();
+        const openBeforeMove = new Set(state.openCells);
+        const wasOpen = (r, c) => openBeforeMove.has(cellKey(r, c));
+        const wasBorder = (r, c) => {
+          if (!isInside(r, c) || wasOpen(r, c)) return false;
+          return Object.values(DIRECTIONS).some(({ dr, dc }) => wasOpen(r + dr, c + dc));
+        };
+
+        getLineSegments(directionName).forEach((positions) => {
+          const sourceTiles = positions
+            .map((pos) => occupied.get(cellKey(pos.r, pos.c)))
+            .filter(Boolean);
+          if (!sourceTiles.length) return;
+
+          let tilesToResolve = sourceTiles;
+          const front = positions[0];
+          const targetR = front.r + direction.dr;
+          const targetC = front.c + direction.dc;
+          const targetIsBorder = wasBorder(targetR, targetC);
+
+          if (targetIsBorder) {
+            const frontTile = sourceTiles[0];
+            const requirement = requirementAt(targetR, targetC);
+            const canExpandThisMove = OPEN_MULTIPLE_PER_MOVE || revealedKeys.size === 0;
+
+            if (canExpandThisMove && canOpen(frontTile.value, requirement)) {
+              removedIds.add(frontTile.id);
+              state.openCells.add(cellKey(targetR, targetC));
+              revealedKeys.add(cellKey(targetR, targetC));
+              tilesToResolve = sourceTiles.slice(1);
+              moved = true;
+            } else {
+              blockedKeys.add(cellKey(targetR, targetC));
+            }
+          }
+
+          const resultTiles = [];
+
+          for (let i = 0; i < tilesToResolve.length; i += 1) {
+            const current = tilesToResolve[i];
+            const next = tilesToResolve[i + 1];
+            if (next && current.value === next.value) {
+              current.value *= 2;
+              gained += current.value;
+              mergedIds.add(current.id);
+              removedIds.add(next.id);
+              i += 1;
+            }
+            resultTiles.push(current);
+          }
+
+          resultTiles.forEach((tile, index) => {
+            const target = positions[index];
+            if (tile.r !== target.r || tile.c !== target.c) moved = true;
+            tile.r = target.r;
+            tile.c = target.c;
+          });
+        });
+
+        state.tiles = state.tiles.filter((tile) => !removedIds.has(tile.id));
+
+        const changed = moved || mergedIds.size > 0 || revealedKeys.size > 0;
+        if (!changed) {
+          if (blockedKeys.size) {
+            state.blockedKeys = blockedKeys;
+            setStatus("Туман устоял");
+            render();
+            playBlocked();
+            window.setTimeout(() => {
+              state.blockedKeys = new Set();
+              render();
+            }, 240);
+          }
+          return;
+        }
+
+        state.score += gained;
+        state.moves += 1;
+        if (state.score > state.best) {
+          state.best = state.score;
+          localStorage.setItem(STORAGE_KEY, String(state.best));
+        }
+        const helpBecameAvailable = recordMoveForHelp(revealedKeys.size > 0);
+
+        state.lastMergedIds = mergedIds;
+        state.lastRevealedKeys = revealedKeys;
+        state.blockedKeys = blockedKeys;
+        state.lastSpawnedIds = new Set();
+        state.locked = true;
+
+        if (revealedKeys.size) {
+          setStatus(revealedKeys.size > 1 ? "Туман расступился" : "Новая земля открыта");
+          playExpand();
+        } else if (mergedIds.size) {
+          setStatus("Плитки слились");
+          playMerge(Math.max(...[...mergedIds].map((id) => state.tiles.find((tile) => tile.id === id)?.value || 0)));
+        } else {
+          setStatus("Ход принят");
+          playSlide();
+        }
+        if (helpBecameAvailable) {
+          setStatus("Духи готовы ответить");
+        }
+
+        render();
+
+        window.setTimeout(() => {
+          const completedNow = state.openCells.size === WORLD_SIZE * WORLD_SIZE;
+          if (!completedNow) {
+            const spawned = spawnRandomTile(revealedKeys);
+            state.lastSpawnedIds = new Set(spawned ? [spawned] : []);
+          }
+          state.lastMergedIds = new Set();
+          state.lastRevealedKeys = new Set();
+          state.blockedKeys = new Set();
+
+          if (state.complete) {
+            return;
+          }
+
+          if (completedNow) {
+            beginVictoryFlow();
+            return;
+          }
+
+          state.gameOver = !hasLegalMove();
+          state.locked = false;
+          render();
+
+          if (state.gameOver) {
+            setStatus("Ходов нет");
+            showOverlay("Ходов нет", "Мир ещё скрыт за туманом.");
+            playBlocked();
+          }
+        }, revealedKeys.size ? 260 : 150);
+      }
+
+      function recordMoveForHelp(openedTerritory) {
+        if (openedTerritory) {
+          state.movesWithoutExpansion = 0;
+          state.helpAvailable = false;
+          return false;
+        }
+
+        state.movesWithoutExpansion += 1;
+        if (!state.helpAvailable && !state.activeBlessing && state.movesWithoutExpansion >= HELP_THRESHOLD) {
+          state.helpAvailable = true;
+          return true;
+        }
+        return false;
+      }
+
+      function resetHelpAfterBlessingRequest() {
+        state.movesWithoutExpansion = 0;
+        state.helpAvailable = false;
+      }
+
+      function beginVictoryFlow() {
+        state.complete = true;
+        state.gameOver = false;
+        state.locked = true;
+        state.victoryRevealing = true;
+        state.blessingMode = null;
+        state.pendingSwapTileId = null;
+        setStatus(currentEra.completionTitle);
+        elements.board.classList.add("victory-reveal");
+        render();
+        playComplete();
+
+        window.setTimeout(() => {
+          showOverlay(currentEra.completionTitle, currentEra.completionText, {
+            buttonText: currentEra.completionButtonText,
+            delayButton: true
+          });
+        }, 1200);
+      }
+
+      function hasLegalMove() {
+        return Object.keys(DIRECTIONS).some((directionName) => directionHasEffect(directionName));
+      }
+
+      function directionHasEffect(directionName) {
+        const direction = DIRECTIONS[directionName];
+        const occupied = tileAtMap();
+
+        for (const positions of getLineSegments(directionName)) {
+          const values = positions.map((pos) => occupied.get(cellKey(pos.r, pos.c))?.value || 0);
+          const compact = values.filter(Boolean);
+          for (let i = 0; i < values.length; i += 1) {
+            if (values[i] === 0 && values.slice(i + 1).some(Boolean)) return true;
+          }
+          for (let i = 0; i < compact.length - 1; i += 1) {
+            if (compact[i] === compact[i + 1]) return true;
+          }
+        }
+
+        return state.tiles.some((tile) => {
+          const r = tile.r + direction.dr;
+          const c = tile.c + direction.dc;
+          return isBorder(r, c) && canOpen(tile.value, requirementAt(r, c));
+        });
+      }
+
+      function tileAtPosition(r, c) {
+        return state.tiles.find((tile) => tile.r === r && tile.c === c) || null;
+      }
+
+      function adjacentOpenEmptyCells(r, c) {
+        const occupied = tileAtMap();
+        return Object.values(DIRECTIONS)
+          .map(({ dr, dc }) => ({ r: r + dr, c: c + dc }))
+          .filter((pos) => isOpen(pos.r, pos.c) && !occupied.has(cellKey(pos.r, pos.c)));
+      }
+
+      function isAdjacentCell(a, b) {
+        return Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
+      }
+
+      function shuffled(items) {
+        return [...items]
+          .map((item) => ({ item, rank: Math.random() }))
+          .sort((a, b) => a.rank - b.rank)
+          .map(({ item }) => item);
+      }
+
+      function targetHintForBlessing(type) {
+        return {
+          magnetism: "Выбери border-клетку",
+          magnetTargetSelection: "Выбери border-клетку",
+          swap: state.pendingSwapTileId ? "Выбери соседнюю плитку" : "Выбери первую плитку",
+          burn: "Выбери обычную плитку",
+          earthquake: "Готово",
+          split: "Выбери плитку для раскола"
+        }[type];
+      }
+
+      function isSelectedSwapCell(r, c) {
+        if (!state.pendingSwapTileId) return false;
+        const tile = state.tiles.find((item) => item.id === state.pendingSwapTileId);
+        return Boolean(tile && tile.r === r && tile.c === c);
+      }
+
+      function isCellTargetable(r, c) {
+        if (!state.blessingMode) return false;
+        const tile = tileAtPosition(r, c);
+
+        if (isMagnetismSelectionMode()) {
+          return Boolean(findMagnetismTileForBorder(r, c));
+        }
+
+        if (state.blessingMode === "burn") {
+          return Boolean(isOpen(r, c) && tile);
+        }
+
+        if (state.blessingMode === "split") {
+          return Boolean(isOpen(r, c) && tile && tile.value >= 4 && adjacentOpenEmptyCells(r, c).length);
+        }
+
+        if (state.blessingMode === "swap") {
+          if (!tile) return false;
+          if (!state.pendingSwapTileId) return true;
+          const firstTile = state.tiles.find((item) => item.id === state.pendingSwapTileId);
+          return Boolean(firstTile && tile.id !== firstTile.id && isAdjacentCell(firstTile, tile));
+        }
+
+        return false;
+      }
+
+      function findMagnetismTileForBorder(r, c) {
+        if (!isBorder(r, c)) return null;
+        const requirement = requirementAt(r, c);
+        return state.tiles
+          .map((tile) => ({
+            tile,
+            distance: Math.abs(tile.r - r) + Math.abs(tile.c - c)
+          }))
+          .filter(
+            ({ tile, distance }) =>
+              isOpen(tile.r, tile.c) &&
+              distance >= 1 &&
+              distance <= MAGNETISM_RANGE &&
+              tile.value === requirement
+          )
+          .sort((a, b) => a.distance - b.distance || a.tile.value - b.tile.value)[0] || null;
+      }
+
+      function magnetismTargets() {
+        const targets = [];
+        for (let r = 0; r < WORLD_SIZE; r += 1) {
+          for (let c = 0; c < WORLD_SIZE; c += 1) {
+            const match = findMagnetismTileForBorder(r, c);
+            if (match) targets.push({ r, c, match });
+          }
+        }
+        return targets;
+      }
+
+      function isMagnetismSelectionMode() {
+        return state.blessingMode === MAGNETISM_SELECTION_MODE;
+      }
+
+      function hasTargetForBlessing(type) {
+        if (type === "earthquake") return state.tiles.length >= 2;
+        if (type === "burn") return state.tiles.length > 0;
+        if (type === "split") {
+          return state.tiles.some((tile) => tile.value >= 4 && adjacentOpenEmptyCells(tile.r, tile.c).length);
+        }
+        if (type === "swap") {
+          return state.tiles.some((tile) =>
+            state.tiles.some((other) => tile.id !== other.id && isAdjacentCell(tile, other))
+          );
+        }
+        if (type === "magnetism") {
+          return magnetismTargets().length > 0;
+        }
+        return false;
+      }
+
+      function requestHelp() {
+        if (state.locked || !state.helpAvailable || state.helpAnimating || state.activeBlessing || state.complete || state.gameOver) return;
+        state.helpAnimating = true;
+        state.helpAvailable = false;
+        state.locked = true;
+        state.blessingMode = null;
+        state.pendingSwapTileId = null;
+        setStatus("Духи слышат зов");
+        render();
+        playHelpAnimation(() => {
+          grantRandomBlessing();
+          resetHelpAfterBlessingRequest();
+          state.helpAnimating = false;
+          state.locked = false;
+          render();
+        });
+      }
+
+      function playHelpAnimation(done) {
+        elements.worldEventLayer.replaceChildren();
+        const flash = document.createElement("div");
+        flash.className = "spirit-flash";
+        const shaman = document.createElement("div");
+        shaman.className = "shaman-event";
+        shaman.innerHTML = '<div class="shaman-body"></div><div class="shaman-staff"></div>';
+        elements.worldEventLayer.append(flash, shaman);
+        playExpand();
+
+        window.setTimeout(() => {
+          elements.board.classList.add("is-shaking");
+        }, 760);
+        window.setTimeout(() => {
+          elements.board.classList.remove("is-shaking");
+        }, 1220);
+        window.setTimeout(() => {
+          elements.worldEventLayer.replaceChildren();
+          done();
+        }, HELP_ANIMATION_MS);
+      }
+
+      function grantRandomBlessing() {
+        if (state.activeBlessing) return;
+        const blessing = BLESSINGS[Math.floor(Math.random() * BLESSINGS.length)];
+        state.activeBlessing = { ...blessing };
+        setStatus(`${blessing.name} даровано`);
+        playMerge(128);
+      }
+
+      function blessingByType(type) {
+        return BLESSINGS.find((blessing) => blessing.type === type) || null;
+      }
+
+      function debugPrepareBlessingTest() {
+        if (!DEBUG_MODE) return;
+        const closedTargets = new Set([cellKey(0, 4), cellKey(0, 3)]);
+        state.score = 0;
+        state.moves = 0;
+        state.openCells.clear();
+        for (let r = 0; r < WORLD_SIZE; r += 1) {
+          for (let c = 0; c < WORLD_SIZE; c += 1) {
+            const key = cellKey(r, c);
+            if (!closedTargets.has(key)) state.openCells.add(key);
+          }
+        }
+        state.tiles = [
+          { id: 1, value: 128, r: 1, c: 4 },
+          { id: 2, value: 64, r: 1, c: 3 },
+          { id: 3, value: 2, r: 2, c: 2 },
+          { id: 4, value: 4, r: 2, c: 4 },
+          { id: 5, value: 8, r: 3, c: 3 },
+          { id: 6, value: 16, r: 4, c: 4 }
+        ];
+        state.nextTileId = 7;
+        state.lastSpawnedIds = new Set();
+        state.lastMergedIds = new Set();
+        state.lastRevealedKeys = new Set();
+        state.blockedKeys = new Set();
+        state.movesWithoutExpansion = 47;
+        state.helpAvailable = false;
+        state.helpAnimating = false;
+        state.activeBlessing = null;
+        state.blessingMode = null;
+        state.pendingSwapTileId = null;
+        state.magnetizingTileId = null;
+        state.magnetismTargetKey = null;
+        state.victoryRevealing = false;
+        state.complete = false;
+        state.gameOver = false;
+        state.locked = false;
+        elements.board.classList.remove("victory-reveal", "is-shaking");
+        elements.worldEventLayer.replaceChildren();
+        hideOverlay();
+        setStatus("Debug setup: 3 хода до помощи");
+        console.log(`Magnetism: valid targets found: ${magnetismTargets().length}`);
+        render();
+      }
+
+      function debugForceHelp() {
+        if (!DEBUG_MODE) return;
+        state.movesWithoutExpansion = HELP_THRESHOLD;
+        state.helpAvailable = true;
+        state.helpAnimating = false;
+        state.activeBlessing = null;
+        state.blessingMode = null;
+        state.pendingSwapTileId = null;
+        state.locked = false;
+        setStatus("Духи готовы ответить");
+        render();
+      }
+
+      function debugGrantBlessing(type) {
+        if (!DEBUG_MODE) return;
+        const blessing = blessingByType(type);
+        if (!blessing) return;
+        state.activeBlessing = { ...blessing };
+        state.blessingMode = null;
+        state.pendingSwapTileId = null;
+        state.helpAvailable = false;
+        state.helpAnimating = false;
+        state.locked = false;
+        setStatus(`${blessing.name} выдано`);
+        if (type === "magnetism") {
+          console.log(`Magnetism: valid targets found: ${magnetismTargets().length}`);
+        }
+        render();
+      }
+
+      function activateBlessing() {
+        if (!state.activeBlessing || state.blessingMode || state.complete || state.gameOver) return;
+        const type = state.activeBlessing.type;
+        if (type === "magnetism") {
+          const targets = magnetismTargets();
+          console.log(`Magnetism: valid targets found: ${targets.length}`);
+          if (!targets.length) {
+            console.log("Magnetism: failed - no valid targets");
+            setStatus("Некуда применить магнетизм");
+            render();
+            return;
+          }
+
+          console.log("Magnetism: activated");
+          state.blessingMode = MAGNETISM_SELECTION_MODE;
+          state.pendingSwapTileId = null;
+          setStatus(targetHintForBlessing(MAGNETISM_SELECTION_MODE));
+          render();
+          return;
+        }
+
+        if (!hasTargetForBlessing(type)) {
+          setStatus("Сейчас некуда применить");
+          render();
+          return;
+        }
+
+        if (type === "earthquake") {
+          applyEarthquakeBlessing();
+          return;
+        }
+
+        state.blessingMode = type;
+        state.pendingSwapTileId = null;
+        setStatus(targetHintForBlessing(type));
+        render();
+      }
+
+      function cancelBlessingTargeting() {
+        if (!state.blessingMode) return;
+        if (isMagnetismSelectionMode()) {
+          console.log("Magnetism: cancelled");
+        }
+        state.blessingMode = null;
+        state.pendingSwapTileId = null;
+        setStatus("Благословение ждёт");
+        render();
+      }
+
+      function handleCellClick(event) {
+        if (!state.blessingMode) return;
+        event.preventDefault();
+        event.stopPropagation();
+        handleBlessingCellSelection(event);
+      }
+
+      function handleBlessingCellSelection(event) {
+        const cell = event.target.closest(".cell");
+        if (!cell) return false;
+        const r = Number(cell.dataset.r);
+        const c = Number(cell.dataset.c);
+
+        if (isMagnetismSelectionMode()) applyMagnetismBlessing(r, c);
+        if (state.blessingMode === "burn") applyBurnBlessing(r, c);
+        if (state.blessingMode === "split") applySplitBlessing(r, c);
+        if (state.blessingMode === "swap") applySwapBlessing(r, c);
+        return true;
+      }
+
+      function finishBlessing(message, options = {}) {
+        state.activeBlessing = null;
+        state.blessingMode = null;
+        state.pendingSwapTileId = null;
+        state.magnetizingTileId = null;
+        state.magnetismTargetKey = null;
+        state.lastMergedIds = new Set();
+        state.blockedKeys = new Set();
+        state.lastRevealedKeys = new Set(options.revealedKey ? [options.revealedKey] : []);
+        state.lastSpawnedIds = new Set(options.spawnedIds || []);
+        if (options.openedTerritory) {
+          state.movesWithoutExpansion = 0;
+          state.helpAvailable = false;
+        }
+        setStatus(message);
+        state.locked = false;
+        render();
+
+        if (options.openedTerritory && state.openCells.size === WORLD_SIZE * WORLD_SIZE) {
+          state.locked = true;
+          window.setTimeout(beginVictoryFlow, 520);
+          return;
+        }
+
+        if (!hasLegalMove()) {
+          state.gameOver = true;
+          showOverlay("Ходов нет", "Мир ещё скрыт за туманом.");
+        }
+      }
+
+      function applyMagnetismBlessing(r, c) {
+        console.log("Magnetism: border clicked");
+        const match = findMagnetismTileForBorder(r, c);
+        if (!match) {
+          console.log("Magnetism: failed - invalid border target");
+          return;
+        }
+
+        const openedKey = cellKey(r, c);
+        state.locked = true;
+        state.magnetismTargetKey = openedKey;
+        state.magnetizingTileId = match.tile.id;
+        setStatus("Магнетизм тянет плитку");
+        playExpand();
+        render();
+        drawMagnetismPulse(match.tile, { r, c });
+
+        window.setTimeout(() => {
+          state.tiles = state.tiles.filter((tile) => tile.id !== match.tile.id);
+          state.openCells.add(openedKey);
+          state.magnetismTargetKey = null;
+          state.magnetizingTileId = null;
+          console.log("Magnetism: resolved");
+          finishBlessing("Магнетизм открыл путь", {
+            openedTerritory: true,
+            revealedKey: openedKey
+          });
+        }, 620);
+      }
+
+      function drawMagnetismPulse(tile, target) {
+        elements.worldEventLayer.replaceChildren();
+        const tileCenter = cellCenter(tile.r, tile.c);
+        const targetCenter = cellCenter(target.r, target.c);
+        const dx = targetCenter.x - tileCenter.x;
+        const dy = targetCenter.y - tileCenter.y;
+        const length = Math.hypot(dx, dy);
+        const angle = Math.atan2(dy, dx);
+        const line = document.createElement("div");
+        line.className = "magnet-line";
+        line.style.width = `${length}px`;
+        line.style.transform = `translate(${tileCenter.x}px, ${tileCenter.y}px) rotate(${angle}rad)`;
+        elements.worldEventLayer.appendChild(line);
+        const tileElement = elements.tileLayer.querySelector(`[data-id="${tile.id}"]`);
+        if (tileElement?.animate) {
+          const step = state.boardMetrics.cell + state.boardMetrics.gap;
+          const start = `translate(${tile.c * step}px, ${tile.r * step}px)`;
+          const pull = `translate(${tile.c * step + dx * 0.72}px, ${tile.r * step + dy * 0.72}px) scale(0.74)`;
+          tileElement.animate(
+            [
+              { transform: start, opacity: 1 },
+              { transform: pull, opacity: 0.18 }
+            ],
+            { duration: 620, easing: "cubic-bezier(0.2, 0.78, 0.2, 1)", fill: "forwards" }
+          );
+        }
+        window.setTimeout(() => {
+          elements.worldEventLayer.replaceChildren();
+        }, 680);
+      }
+
+      function cellCenter(r, c) {
+        const step = state.boardMetrics.cell + state.boardMetrics.gap;
+        const half = state.boardMetrics.cell / 2;
+        return {
+          x: c * step + half,
+          y: r * step + half
+        };
+      }
+
+      function applyBurnBlessing(r, c) {
+        const tile = tileAtPosition(r, c);
+        if (!isOpen(r, c) || !tile) {
+          setStatus("Очищение здесь не работает");
+          render();
+          return;
+        }
+
+        state.tiles = state.tiles.filter((item) => item.id !== tile.id);
+        playBlocked();
+        finishBlessing("Плитка очищена");
+      }
+
+      function applySplitBlessing(r, c) {
+        const tile = tileAtPosition(r, c);
+        const empty = adjacentOpenEmptyCells(r, c);
+        if (!isOpen(r, c) || !tile || tile.value < 4 || !empty.length) {
+          setStatus("Расколу нужно место");
+          render();
+          return;
+        }
+
+        const target = empty[Math.floor(Math.random() * empty.length)];
+        tile.value /= 2;
+        const newTile = {
+          id: state.nextTileId,
+          value: tile.value,
+          r: target.r,
+          c: target.c
+        };
+        state.nextTileId += 1;
+        state.tiles.push(newTile);
+        playMerge(tile.value * 2);
+        finishBlessing("Плитка расколота", { spawnedIds: [newTile.id] });
+      }
+
+      function applySwapBlessing(r, c) {
+        const tile = tileAtPosition(r, c);
+        if (!isOpen(r, c) || !tile) {
+          setStatus("Выбери обычную плитку");
+          render();
+          return;
+        }
+
+        if (!state.pendingSwapTileId) {
+          state.pendingSwapTileId = tile.id;
+          setStatus(targetHintForBlessing("swap"));
+          render();
+          return;
+        }
+
+        const firstTile = state.tiles.find((item) => item.id === state.pendingSwapTileId);
+        if (!firstTile || firstTile.id === tile.id || !isAdjacentCell(firstTile, tile)) {
+          setStatus("Нужна соседняя плитка");
+          render();
+          return;
+        }
+
+        const firstPosition = { r: firstTile.r, c: firstTile.c };
+        firstTile.r = tile.r;
+        firstTile.c = tile.c;
+        tile.r = firstPosition.r;
+        tile.c = firstPosition.c;
+        playSlide();
+        finishBlessing("Плитки обменялись");
+      }
+
+      function applyEarthquakeBlessing() {
+        const selected = shuffled(state.tiles).slice(0, Math.min(4, state.tiles.length));
+        if (selected.length < 2) {
+          setStatus("Земля пока молчит");
+          render();
+          return;
+        }
+
+        const positions = selected.map((tile) => ({ r: tile.r, c: tile.c }));
+        selected.forEach((tile, index) => {
+          const nextPosition = positions[(index + 1) % positions.length];
+          tile.r = nextPosition.r;
+          tile.c = nextPosition.c;
+        });
+        playExpand();
+        finishBlessing("Земля сдвинулась");
+      }
+
+      function render() {
+        syncBoardMetrics();
+        renderCells();
+        renderTiles();
+        renderEffects();
+        renderMiniMap();
+        renderHud();
+        renderBlessingUI();
+        renderDebugPanel();
+        renderModeButtons();
+      }
+
+      function renderCells() {
+        const fragment = document.createDocumentFragment();
+        for (let r = 0; r < WORLD_SIZE; r += 1) {
+          for (let c = 0; c < WORLD_SIZE; c += 1) {
+            const key = cellKey(r, c);
+            const cell = document.createElement("div");
+            const open = isOpen(r, c);
+            const border = isBorder(r, c);
+            cell.className = `cell ${open ? "open" : border ? "border" : "fog"}`;
+            cell.dataset.r = String(r);
+            cell.dataset.c = String(c);
+            if (state.lastRevealedKeys.has(key)) cell.classList.add("revealed");
+            if (state.blockedKeys.has(key)) cell.classList.add("blocked");
+            if (isCellTargetable(r, c)) cell.classList.add("targetable");
+            if (isSelectedSwapCell(r, c)) cell.classList.add("selected");
+            if (state.magnetismTargetKey === key) cell.classList.add("magnet-target");
+            if (open) {
+              cell.style.backgroundImage = `url("${WORLD_IMAGE}")`;
+              cell.style.backgroundSize = `${WORLD_SIZE * 100}% ${WORLD_SIZE * 100}%`;
+              cell.style.backgroundPosition = terrainPosition(r, c);
+            }
+            if (border) {
+              const badge = document.createElement("span");
+              badge.className = "requirement";
+              badge.textContent = requirementAt(r, c);
+              cell.appendChild(badge);
+            }
+            fragment.appendChild(cell);
+          }
+        }
+        elements.cellLayer.replaceChildren(fragment);
+      }
+
+      function renderTiles() {
+        const existing = new Map(
+          [...elements.tileLayer.children].map((child) => [Number(child.dataset.id), child])
+        );
+        const liveIds = new Set();
+
+        state.tiles.forEach((tile) => {
+          liveIds.add(tile.id);
+          let element = existing.get(tile.id);
+          if (!element) {
+            element = document.createElement("div");
+            element.className = "tile";
+            element.dataset.id = String(tile.id);
+            elements.tileLayer.appendChild(element);
+          }
+
+          const style = styleForTile(tile.value);
+          element.textContent = tile.value;
+          element.className = [
+            "tile",
+            String(tile.value).length >= 4 ? "compact" : "",
+            state.lastSpawnedIds.has(tile.id) ? "is-new" : "",
+            state.lastMergedIds.has(tile.id) ? "is-merged" : "",
+            state.magnetizingTileId === tile.id ? "is-magnetized" : ""
+          ]
+            .filter(Boolean)
+            .join(" ");
+          element.style.setProperty("--r", tile.r);
+          element.style.setProperty("--c", tile.c);
+          element.style.setProperty("--digits", String(tile.value).length);
+          element.style.setProperty("--tile-bg", style.bg);
+          element.style.setProperty("--tile-ink", style.ink);
+          element.style.setProperty("--tile-font", `${fontSizeForTile(tile.value)}px`);
+          positionElement(element, tile.r, tile.c);
+        });
+
+        existing.forEach((element, id) => {
+          if (!liveIds.has(id)) element.remove();
+        });
+      }
+
+      function renderEffects() {
+        elements.effectLayer.replaceChildren();
+        state.lastRevealedKeys.forEach((key) => {
+          const { r, c } = parseCellKey(key);
+          const effect = document.createElement("div");
+          effect.className = "reveal-flash";
+          effect.style.setProperty("--r", r);
+          effect.style.setProperty("--c", c);
+          positionElement(effect, r, c);
+          elements.effectLayer.appendChild(effect);
+        });
+      }
+
+      function syncBoardMetrics() {
+        const rect = elements.cellLayer.getBoundingClientRect();
+        if (!rect.width) return;
+        const styles = window.getComputedStyle(elements.cellLayer);
+        const gap = parseFloat(styles.columnGap || styles.gap) || 0;
+        const cell = (rect.width - gap * (WORLD_SIZE - 1)) / WORLD_SIZE;
+        state.boardMetrics = { cell, gap };
+        elements.board.style.setProperty("--tile-size", `${cell}px`);
+      }
+
+      function positionElement(element, r, c) {
+        const step = state.boardMetrics.cell + state.boardMetrics.gap;
+        element.style.transform = `translate(${c * step}px, ${r * step}px)`;
+      }
+
+      function renderMiniMap() {
+        const fragment = document.createDocumentFragment();
+        for (let r = 0; r < WORLD_SIZE; r += 1) {
+          for (let c = 0; c < WORLD_SIZE; c += 1) {
+            const item = document.createElement("div");
+            item.className = `mini-cell ${isOpen(r, c) ? "open" : isBorder(r, c) ? "border" : ""}`;
+            fragment.appendChild(item);
+          }
+        }
+        elements.miniMap.replaceChildren(fragment);
+      }
+
+      function renderHud() {
+        elements.score.textContent = state.score;
+        elements.best.textContent = state.best;
+        elements.revealed.textContent = `${Math.round((state.openCells.size / (WORLD_SIZE * WORLD_SIZE)) * 100)}%`;
+        elements.soundButton.textContent = state.muted ? "Звук выключен" : "Звук включён";
+        elements.helpButton.textContent = currentEra.helpActionText;
+        elements.helpButton.classList.toggle(
+          "hidden",
+          state.locked ||
+            !state.helpAvailable ||
+            state.helpAnimating ||
+            Boolean(state.activeBlessing) ||
+            state.complete ||
+            state.gameOver
+        );
+        const helpVisible = state.helpAvailable && !state.activeBlessing && !state.complete && !state.gameOver;
+        elements.helpButton.classList.toggle("is-available", helpVisible);
+        elements.sidePanel.classList.toggle("help-ready", helpVisible);
+        elements.board.classList.toggle("victory-reveal", state.victoryRevealing);
+      }
+
+      function renderBlessingUI() {
+        const blessing = state.activeBlessing;
+        elements.blessingPanel.classList.toggle("hidden", !blessing);
+        if (!blessing) return;
+
+        elements.blessingIcon.textContent = blessing.icon;
+        elements.blessingName.textContent = blessing.name;
+        elements.blessingHint.textContent = state.blessingMode
+          ? targetHintForBlessing(blessing.type)
+          : blessing.hint;
+        elements.useBlessingButton.disabled = Boolean(state.blessingMode);
+        elements.cancelBlessingButton.classList.toggle("hidden", !state.blessingMode);
+      }
+
+      function renderDebugPanel() {
+        elements.debugPanel.classList.toggle("hidden", !DEBUG_MODE);
+      }
+
+      function renderModeButtons() {
+        elements.strictMode.classList.toggle("active", OPEN_MODE === "strict");
+        elements.sacrificeMode.classList.toggle("active", OPEN_MODE === "sacrifice");
+      }
+
+      function styleForTile(value) {
+        return tilePalette.find((entry) => value <= entry.limit) || tilePalette[tilePalette.length - 1];
+      }
+
+      function fontSizeForTile(value) {
+        const digits = String(value).length;
+        const ratio = digits <= 2 ? 0.46 : digits === 3 ? 0.39 : digits === 4 ? 0.32 : 0.26;
+        return Math.max(11, Math.min(38, state.boardMetrics.cell * ratio));
+      }
+
+      function setStatus(text) {
+        elements.statusText.textContent = text;
+      }
+
+      function showOverlay(title, text, options = {}) {
+        elements.overlayTitle.textContent = title;
+        elements.overlayText.textContent = text;
+        elements.overlayButton.textContent = options.buttonText || "Новая игра";
+        elements.overlayButton.classList.toggle("is-delayed", Boolean(options.delayButton));
+        elements.overlayButton.classList.remove("is-ready");
+        elements.overlay.classList.add("show");
+        if (options.delayButton) {
+          window.setTimeout(() => {
+            elements.overlayButton.classList.remove("is-delayed");
+            elements.overlayButton.classList.add("is-ready");
+          }, 1400);
+        }
+      }
+
+      function hideOverlay() {
+        elements.overlay.classList.remove("show");
+        elements.overlayButton.classList.remove("is-delayed", "is-ready");
+        elements.overlayButton.textContent = "Новая игра";
+      }
+
+      function ensureAudio() {
+        if (state.muted) return null;
+        if (!audioContext) {
+          const AudioCtor = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtor) return null;
+          audioContext = new AudioCtor();
+        }
+        return audioContext;
+      }
+
+      function tone(frequency, duration, type = "sine", gain = 0.035, delay = 0) {
+        const ctx = ensureAudio();
+        if (!ctx) return;
+        const start = ctx.currentTime + delay;
+        const oscillator = ctx.createOscillator();
+        const volume = ctx.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, start);
+        volume.gain.setValueAtTime(0.0001, start);
+        volume.gain.exponentialRampToValueAtTime(gain, start + 0.012);
+        volume.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        oscillator.connect(volume);
+        volume.connect(ctx.destination);
+        oscillator.start(start);
+        oscillator.stop(start + duration + 0.02);
+      }
+
+      function playSlide() {
+        tone(220, 0.055, "triangle", 0.018);
+      }
+
+      function playMerge(value) {
+        const base = Math.min(620, 220 + Math.log2(Math.max(value, 2)) * 28);
+        tone(base, 0.06, "triangle", 0.026);
+        tone(base * 1.5, 0.09, "sine", 0.018, 0.035);
+      }
+
+      function playExpand() {
+        tone(196, 0.08, "triangle", 0.025);
+        tone(392, 0.12, "sine", 0.028, 0.08);
+        tone(588, 0.14, "sine", 0.018, 0.16);
+      }
+
+      function playBlocked() {
+        tone(120, 0.075, "sawtooth", 0.018);
+      }
+
+      function playComplete() {
+        tone(294, 0.1, "triangle", 0.025);
+        tone(370, 0.1, "triangle", 0.025, 0.1);
+        tone(494, 0.16, "sine", 0.03, 0.2);
+      }
+
+      function setMode(mode) {
+        OPEN_MODE = mode;
+        setStatus(mode === "strict" ? "Strict mode" : "Sacrifice mode");
+        renderModeButtons();
+      }
+
+      function handleKeydown(event) {
+        const directionName = KEY_TO_DIRECTION[event.key];
+        if (!directionName) return;
+        event.preventDefault();
+        move(directionName);
+      }
+
+      function handlePointerDown(event) {
+        if (state.blessingMode) {
+          if (handleBlessingCellSelection(event)) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          return;
+        }
+        pointerStart = {
+          x: event.clientX,
+          y: event.clientY,
+          id: event.pointerId
+        };
+        elements.board.setPointerCapture?.(event.pointerId);
+      }
+
+      function handlePointerUp(event) {
+        if (!pointerStart || pointerStart.id !== event.pointerId) return;
+        const dx = event.clientX - pointerStart.x;
+        const dy = event.clientY - pointerStart.y;
+        pointerStart = null;
+        if (state.blessingMode) return;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 26) return;
+        move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : dy > 0 ? "down" : "up");
+      }
+
+      window.addEventListener("keydown", handleKeydown);
+      elements.cellLayer.addEventListener("click", handleCellClick);
+      elements.board.addEventListener("pointerdown", handlePointerDown);
+      elements.board.addEventListener("pointerup", handlePointerUp);
+      elements.board.addEventListener("pointercancel", () => {
+        pointerStart = null;
+      });
+      elements.strictMode.addEventListener("click", () => setMode("strict"));
+      elements.sacrificeMode.addEventListener("click", () => setMode("sacrifice"));
+      elements.soundButton.addEventListener("click", () => {
+        state.muted = !state.muted;
+        renderHud();
+      });
+      elements.helpButton.addEventListener("click", requestHelp);
+      elements.useBlessingButton.addEventListener("click", activateBlessing);
+      elements.cancelBlessingButton.addEventListener("click", cancelBlessingTargeting);
+      elements.debugBlessingTestButton.addEventListener("click", debugPrepareBlessingTest);
+      elements.debugForceHelpButton.addEventListener("click", debugForceHelp);
+      elements.debugPanel.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-debug-blessing]");
+        if (!button) return;
+        debugGrantBlessing(button.dataset.debugBlessing);
+      });
+      elements.newGameButton.addEventListener("click", startGame);
+      elements.overlayButton.addEventListener("click", startGame);
+      window.addEventListener("resize", () => {
+        syncBoardMetrics();
+        renderTiles();
+        renderEffects();
+      });
+
+      window.FogOfAges2048 = {
+        startGame,
+        move,
+        setMode,
+        debugPrepareBlessingTest,
+        debugForceHelp,
+        debugGrantBlessing,
+        getState: () => ({
+          score: state.score,
+          best: state.best,
+          moves: state.moves,
+          movesWithoutExpansion: state.movesWithoutExpansion,
+          helpAvailable: state.helpAvailable,
+          activeBlessing: state.activeBlessing ? state.activeBlessing.type : null,
+          blessingMode: state.blessingMode,
+          debugMode: DEBUG_MODE,
+          startBoardSize: normalizedStartBoardSize(),
+          magnetismTargets: magnetismTargets().length,
+          mode: OPEN_MODE,
+          revealed: state.openCells.size,
+          tiles: state.tiles.map((tile) => ({ ...tile }))
+        })
+      };
+
+      startGame();
+    </script>
+  </body>
+</html>
